@@ -7,6 +7,7 @@ use std::fmt;
 use std::fmt::Display;
 use std::io;
 use std::io::Read;
+use std::mem;
 use std::vec;
 use serde::de;
 use serde::de::Visitor;
@@ -23,6 +24,11 @@ enum OscArg {
     b(Vec<u8>),
 }
 
+struct MaybeSkipComma<I> {
+    iter: I,
+    not_first: bool,
+}
+
 struct OscDeserializer<R> {
     read: R,
     state: State,
@@ -37,7 +43,7 @@ enum State {
     /// Deserializing the argument data.
     /// Each entry in the Vec is the typecode we parsed earlier
     /// We store this as an iterator to avoid tracking the index of the current arg.
-    Arguments(vec::IntoIter<u8>),
+    Arguments(MaybeSkipComma<vec::IntoIter<u8>>),
 }
 
 #[derive(Debug)]
@@ -124,9 +130,11 @@ impl<R> OscDeserializer<R>
             Error::StrParseError(err)
         })
     }
-    fn parse_typetag(&mut self) -> ResultE<vec::IntoIter<u8>> {
+    fn parse_typetag(&mut self) -> ResultE<MaybeSkipComma<vec::IntoIter<u8>>> {
         // The type tag is a string type, with 4-byte null padding.
-        self.read_0term_bytes().map(|bytes| bytes.into_iter())
+        // The type tag must begin with a ","
+        // Note: the 1.0 specs recommend to be robust in the case of a missing type tag string.
+        self.read_0term_bytes().map(|bytes| MaybeSkipComma::new(bytes.into_iter()))
     }
 
     fn parse_next(&mut self) -> ResultE<OscArg> {
@@ -336,5 +344,25 @@ impl<'a, R> de::Deserializer for &'a mut OscDeserializer<R>
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self {
         Error::Io(e)
+    }
+}
+
+impl<I> MaybeSkipComma<I> where I: Iterator<Item=u8> {
+    fn new(iter: I) -> Self {
+        Self {
+            iter: iter,
+            not_first: false,
+        }
+    }
+    /// For the first item in the iterator: drop it if it's a comma.
+    /// For all subsequent items, yield them unchanged.
+    fn next(&mut self) -> Option<u8> {
+        for v in self.iter.by_ref() {
+            let not_first = mem::replace(&mut self.not_first, true);
+            if not_first || v != b',' {
+                return Some(v)
+            }
+        }
+        None
     }
 }
