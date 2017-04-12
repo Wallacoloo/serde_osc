@@ -153,7 +153,6 @@ impl<R> OscDeserializer<R>
                 // thing where we pop the typetag here, and then call parse_arg OUTSIDE
                 tags.next()
             },
-            _ => panic!("Invalid OscDeserializer state"),
         };
         let parsed = self.parse_arg(typetag)?;
         return Ok(parsed);
@@ -193,7 +192,10 @@ impl<'a, R> de::Deserializer for &'a mut OscDeserializer<R>
     {
         let value = self.parse_next()?;
         match value {
-            _ => unimplemented!()
+            OscArg::i(i) => visitor.visit_i32(i),
+            OscArg::f(f) => visitor.visit_f32(f),
+            OscArg::s(s) => visitor.visit_string(s),
+            OscArg::b(b) => unimplemented!(),
         }
     }
     fn deserialize_bool<V>(self, visitor: V) -> ResultE<V::Value>
