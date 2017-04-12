@@ -51,10 +51,11 @@ impl<R> OscDeserializer<R>
         let mut data = Vec::new();
         // Because of the 4-byte required padding, we can process 4 characters at a time
         let mut buf: [u8; 4] = [0, 0, 0, 0];
-        while true {
+        let mut num_zeros = 0;
+        while num_zeros == 0 {
             self.read.read_exact(&mut buf)?;
             // Copy the NON-NULL characters to the buffer.
-            let num_zeros = buf.iter().filter(|c| **c == 0).count();
+            num_zeros = buf.iter().filter(|c| **c == 0).count();
             if buf[4-num_zeros..4].iter().any(|c| *c != 0) {
                 // We had data after the null terminator.
                 return Err(Error::BadPadding);
