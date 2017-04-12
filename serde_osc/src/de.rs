@@ -7,27 +7,12 @@ use std::fmt;
 use std::fmt::Display;
 use std::io;
 use std::io::Read;
-use std::mem;
 use std::vec;
 use serde::de;
 use serde::de::Visitor;
 
-enum OscArg {
-    /// 32-bit signed integer
-    i(i32),
-    /// 32-bit float
-    f(f32),
-    /// String; specified as null-terminated ascii.
-    /// This might also represent the message address pattern (aka path)
-    s(String),
-    /// 'blob' (binary) data
-    b(Vec<u8>),
-}
-
-struct MaybeSkipComma<I> {
-    iter: I,
-    not_first: bool,
-}
+use maybeskipcomma::MaybeSkipComma;
+use oscarg::OscArg;
 
 struct OscDeserializer<R> {
     read: R,
@@ -347,22 +332,3 @@ impl From<io::Error> for Error {
     }
 }
 
-impl<I> MaybeSkipComma<I> where I: Iterator<Item=u8> {
-    fn new(iter: I) -> Self {
-        Self {
-            iter: iter,
-            not_first: false,
-        }
-    }
-    /// For the first item in the iterator: drop it if it's a comma.
-    /// For all subsequent items, yield them unchanged.
-    fn next(&mut self) -> Option<u8> {
-        for v in self.iter.by_ref() {
-            let not_first = mem::replace(&mut self.not_first, true);
-            if not_first || v != b',' {
-                return Some(v)
-            }
-        }
-        None
-    }
-}
