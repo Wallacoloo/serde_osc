@@ -199,7 +199,7 @@ impl<'a, R> de::Deserializer for &'a mut OscDeserializer<R>
             OscArg::i(i) => visitor.visit_i32(i),
             OscArg::f(f) => visitor.visit_f32(f),
             OscArg::s(s) => visitor.visit_string(s),
-            OscArg::b(b) => unimplemented!(),
+            OscArg::b(b) => visitor.visit_byte_buf(b),
         }
     }
     fn deserialize_bool<V>(self, visitor: V) -> ResultE<V::Value>
