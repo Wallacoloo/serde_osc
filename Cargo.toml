@@ -1,0 +1,6 @@
+[workspace]
+members = [
+	'serde_osc',
+	'serde_osc_macros',
+]
+
