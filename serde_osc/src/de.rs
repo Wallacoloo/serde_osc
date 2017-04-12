@@ -103,18 +103,14 @@ impl<R> OscDeserializer<R>
         // Because of the 4-byte required padding, we can process 4 characters at a time
         let mut buf: [u8; 4] = [0, 0, 0, 0];
         while true {
-            match self.read.read_exact(&mut buf) {
-                Err(err) => return Err(Error::Io(err)),
-                Ok(_) => {
-                    // Copy the NON-NULL characters to the buffer.
-                    let num_zeros = buf.iter().filter(|c| **c == 0).count();
-                    if buf[4-num_zeros..4].iter().any(|c| *c != 0) {
-                        // We had data after the null terminator.
-                        return Err(Error::BadPadding);
-                    }
-                    data.extend_from_slice(&buf[0..4-num_zeros]);
-                },
+            self.read.read_exact(&mut buf)?;
+            // Copy the NON-NULL characters to the buffer.
+            let num_zeros = buf.iter().filter(|c| **c == 0).count();
+            if buf[4-num_zeros..4].iter().any(|c| *c != 0) {
+                // We had data after the null terminator.
+                return Err(Error::BadPadding);
             }
+            data.extend_from_slice(&buf[0..4-num_zeros]);
         }
         Ok(data)
     }
@@ -168,17 +164,25 @@ impl<R> OscDeserializer<R>
         }
     }
     fn parse_i32(&mut self) -> ResultE<i32> {
-        self.read.read_i32::<BigEndian>().map_err(|err| {
-            Error::Io(err)
-        })
+       Ok( self.read.read_i32::<BigEndian>()?)
     }
     fn parse_f32(&mut self) -> ResultE<f32> {
-        self.read.read_f32::<BigEndian>().map_err(|err| {
-            Error::Io(err)
-        })
+        Ok(self.read.read_f32::<BigEndian>()?)
     }
     fn parse_blob(&mut self) -> ResultE<Vec<u8>> {
-        unimplemented!()
+        let size = self.parse_i32()?;
+        // Blobs are padded to a 4-byte boundary
+        let padding = ((4-size)%4) as usize;
+        let padded_size = size as usize + padding;
+        // Read EXACTLY this much data:
+        let mut data = vec![0; padded_size];
+        self.read.read_exact(&mut data)?;
+        // Ensure these extra bytes where NULL (sanity check)
+        if data.drain(size as usize..padded_size).any(|c| c == 0) {
+            Err(Error::BadPadding)
+        } else {
+            Ok(data)
+        }
     }
 }
 
@@ -325,4 +329,12 @@ impl<'a, R> de::Deserializer for &'a mut OscDeserializer<R>
     ) -> ResultE<V::Value>
     where
         V: Visitor { unimplemented!() }
+}
+
+
+// Conversion from io::Error for use with the `?` operator
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        Error::Io(e)
+    }
 }
