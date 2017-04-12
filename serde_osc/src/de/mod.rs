@@ -1,5 +1,8 @@
 /// Deserialization
 
+mod maybeskipcomma;
+
+
 use byteorder::{BigEndian, ReadBytesExt};
 
 use std;
@@ -11,7 +14,7 @@ use std::vec;
 use serde::de;
 use serde::de::Visitor;
 
-use maybeskipcomma::MaybeSkipComma;
+use self::maybeskipcomma::MaybeSkipComma;
 use oscarg::OscArg;
 
 struct OscDeserializer<R> {
