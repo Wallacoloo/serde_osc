@@ -24,8 +24,6 @@ pub enum Error {
     /// We store ascii strings as UTF-8.
     /// Technically, this is safe, but if we received non-ascii data, we could have invalid UTF-8
     StrParseError(std::string::FromUtf8Error),
-    // TODO: replace this with the Io error.
-    Eof,
 }
 
 // Conversion from io::Error for use with the `?` operator
@@ -38,7 +36,14 @@ impl From<io::Error> for Error {
 
 impl Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "serde_osc::de::Error")
+        match *self {
+            Error::Message(ref msg) => write!(f, "Deserializer Error: {}", msg),
+            Error::UnknownType(typecode) => write!(f, "Unknown OSC type: '{}'", typecode as char),
+            Error::ArgMiscount => write!(f, "OSC argument count mismatch"),
+            Error::BadPadding => write!(f, "OSC data not padded to 4-byte boundary"),
+            Error::Io(ref err) => err.fmt(f),
+            Error::StrParseError(_) => write!(f, "OSC string contains illegal (non-ascii) characters"),
+        }
     }
 }
 
@@ -46,11 +51,19 @@ impl std::error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::Message(ref msg) => msg,
-            _ => "Unknown serde_osc::de::Error",
+            Error::UnknownType(_) => "Unknown OSC typetag",
+            Error::ArgMiscount => "OSC argument count mismatch",
+            Error::BadPadding => "Incorrect OSC data padding",
+            Error::Io(ref io_error) => io_error.description(),
+            Error::StrParseError(ref utf_error) => utf_error.description(),
         }
     }
     fn cause(&self) -> Option<&std::error::Error> {
-        None
+        match *self {
+            Error::Io(ref io_error) => Some(io_error),
+            Error::StrParseError(ref utf_error) => Some(utf_error),
+            _ => None,
+        }
     }
 }
 

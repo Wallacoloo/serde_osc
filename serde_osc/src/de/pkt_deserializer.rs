@@ -42,7 +42,7 @@ impl<'a, R> de::Deserializer for &'a mut PktDeserializer<R>
                 self.state = State::Parsed;
                 ret
             },
-            State::Parsed => Err(Error::Eof),
+            State::Parsed => Err(Error::ArgMiscount),
         }
     }
 
