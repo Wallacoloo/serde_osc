@@ -1,3 +1,5 @@
+#![feature(try_from)]
+
 extern crate byteorder;
 #[macro_use]
 extern crate serde;

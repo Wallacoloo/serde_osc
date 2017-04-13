@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::io::Read;
 use std::vec;
 use byteorder::{BigEndian, ReadBytesExt};
@@ -67,9 +68,7 @@ impl<R> MsgVisitor<R>
         // contains a zero; the only zero possible in a UTF-8 string is the ASCII zero.
         // See the UTF-8 table here: https://en.wikipedia.org/wiki/UTF-8#History
         let bytes = self.read_0term_bytes()?;
-        String::from_utf8(bytes).map_err(|err| {
-            Error::StrParseError(err)
-        })
+        Ok(String::from_utf8(bytes)?)
     }
     fn parse_typetag(&mut self) -> ResultE<MaybeSkipComma<vec::IntoIter<u8>>> {
         // The type tag is a string type, with 4-byte null padding.
@@ -120,15 +119,15 @@ impl<R> MsgVisitor<R>
         Ok(self.read.read_f32::<BigEndian>()?)
     }
     fn parse_blob(&mut self) -> ResultE<Vec<u8>> {
-        let size = self.parse_i32()?;
+        let size: usize = self.parse_i32()?.try_into()?;
         // Blobs are padded to a 4-byte boundary
-        let padding = ((4-size)%4) as usize;
-        let padded_size = size as usize + padding;
+        let padding = (4-size)%4;
+        let padded_size = size + padding;
         // Read EXACTLY this much data:
         let mut data = vec![0; padded_size];
         self.read.read_exact(&mut data)?;
         // Ensure these extra bytes where NULL (sanity check)
-        if data.drain(size as usize..padded_size).any(|c| c == 0) {
+        if data.drain(size..padded_size).any(|c| c == 0) {
             Err(Error::BadPadding)
         } else {
             Ok(data)
