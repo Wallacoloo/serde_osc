@@ -126,10 +126,10 @@ impl<R> MsgVisitor<R>
         let mut data = vec![0; padded_size];
         self.read.read_exact(&mut data)?;
         // Ensure these extra bytes where NULL (sanity check)
-        if data.drain(size..padded_size).any(|c| c == 0) {
-            Err(Error::BadPadding)
-        } else {
+        if data.drain(size..padded_size).all(|c| c == 0) {
             Ok(data)
+        } else {
+            Err(Error::BadPadding)
         }
     }
 }
@@ -147,6 +147,9 @@ impl de::Deserializer for MsgItemDeserializer {
             OscArg::i(i) => visitor.visit_i32(i),
             OscArg::f(f) => visitor.visit_f32(f),
             OscArg::s(s) => visitor.visit_string(s),
+            // TODO: If the user is attempting to deserialize a Vec<u8>, this
+            //   will error! We should make use of the deserialize_seq function
+            //   in this case.
             OscArg::b(b) => visitor.visit_byte_buf(b),
         }
     }
