@@ -4,6 +4,10 @@ use std::fmt::Display;
 use std::io;
 use serde::de;
 
+/// Alias for a 'Result' with the error type 'serde_osc::de::Error'
+pub type ResultE<T> = Result<T, Error>;
+
+
 #[derive(Debug)]
 pub enum Error {
     /// User provided error message (via serde::de::Error::custom)
@@ -20,6 +24,8 @@ pub enum Error {
     /// We store ascii strings as UTF-8.
     /// Technically, this is safe, but if we received non-ascii data, we could have invalid UTF-8
     StrParseError(std::string::FromUtf8Error),
+    // TODO: replace this with the Io error.
+    Eof,
 }
 
 // Conversion from io::Error for use with the `?` operator
