@@ -31,6 +31,8 @@ fn basic() {
             let arg_0 = visitor.visit()?.unwrap();
             let arg_1 = visitor.visit()?.unwrap();
             let arg_2 = visitor.visit()?.unwrap();
+            // Assert end of packet.
+            assert!(visitor.visit::<()>()? == None);
             Ok(Deserialized{ address, arg_0, arg_1, arg_2 })
         }
     }

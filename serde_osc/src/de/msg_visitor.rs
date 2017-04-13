@@ -1,5 +1,5 @@
 use std::convert::TryInto;
-use std::io::Read;
+use std::io::{Read, Take};
 use std::vec;
 use byteorder::{BigEndian, ReadBytesExt};
 use serde::de;
@@ -11,7 +11,7 @@ use oscarg::OscArg;
 
 /// Deserializes a single message, within a packet.
 pub struct MsgVisitor<R: Read> {
-    read: R,
+    read: Take<R>,
     state: State,
 }
 
@@ -37,7 +37,7 @@ struct MsgItemDeserializer {
 impl<R> MsgVisitor<R>
     where R: Read
 {
-    pub fn new(read: R) -> Self {
+    pub fn new(read: Take<R>) -> Self {
         Self {
             read: read,
             state: State::Address,
@@ -99,7 +99,14 @@ impl<R> MsgVisitor<R>
             },
         };
         match typetag {
-            None => Ok(None),
+            // End of message. Make sure we actually used all the bytes we were given,
+            // otherwise any potential next message in the bundle may be parsed incorrectly!
+            None => match self.read.limit() {
+                // all bytes read = Ok
+                0 => Ok(None),
+                // extraneous bytes = Error!
+                _ => Err(Error::ArgMiscount),
+            },
             Some(tag) => self.parse_arg(tag).map(|arg| Some(arg))
         }
     }
