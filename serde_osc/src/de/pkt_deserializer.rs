@@ -1,4 +1,5 @@
 use std::io::Read;
+use byteorder::{BigEndian, ReadBytesExt};
 use serde::de;
 use serde::de::Visitor;
 
@@ -6,6 +7,8 @@ use super::error::{Error, ResultE};
 use super::msg_visitor::MsgVisitor;
 
 /// Deserializes an entire OSC packet, which may contain multiple messages.
+/// An OSC packet consists of an int32 indicating its length, followed by
+/// the packet contents: EITHER a message OR a bundle.
 /// TODO: currently only parses the first packet.
 pub struct PktDeserializer<R: Read> {
     read: R,
@@ -38,9 +41,11 @@ impl<'a, R> de::Deserializer for &'a mut PktDeserializer<R>
     {
         match self.state {
             State::Unparsed => {
-                let ret = visitor.visit_seq(MsgVisitor::new(self.read.by_ref()));
+                // First, extract the length of the packet.
+                let length = self.read.read_i32::<BigEndian>()?;
+                let reader = self.read.by_ref().take(length as u64);
                 self.state = State::Parsed;
-                ret
+                visitor.visit_seq(MsgVisitor::new(reader))
             },
             State::Parsed => Err(Error::ArgMiscount),
         }

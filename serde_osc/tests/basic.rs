@@ -35,7 +35,7 @@ fn basic() {
                 arg_1: arg_1})
         }
     }
-    let test_input = b"/example/path\0\0\0,ii\0\x01\x02\x03\x04\x05\x06\x07\x08";
+    let test_input = b"\x00\x00\x00\x1c/example/path\0\0\0,ii\0\x01\x02\x03\x04\x05\x06\x07\x08";
     let expected = Deserialized {
         address: "/example/path".to_owned(),
         arg_0: 0x01020304,
