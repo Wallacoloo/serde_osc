@@ -121,8 +121,7 @@ impl<R> MsgVisitor<R>
     fn parse_blob(&mut self) -> ResultE<Vec<u8>> {
         let size: usize = self.parse_i32()?.try_into()?;
         // Blobs are padded to a 4-byte boundary
-        let padding = (4-size)%4;
-        let padded_size = size + padding;
+        let padded_size = (size + 3) & !0x3;
         // Read EXACTLY this much data:
         let mut data = vec![0; padded_size];
         self.read.read_exact(&mut data)?;
