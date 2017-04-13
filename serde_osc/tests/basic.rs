@@ -1,7 +1,6 @@
 extern crate serde;
 extern crate serde_osc;
 
-use std::error::Error;
 use std::fmt;
 use std::io::Cursor;
 use serde::Deserializer;
@@ -42,7 +41,7 @@ fn basic() {
         arg_1: 0x05060708,
     };
     let rd = Cursor::new(test_input);
-    let mut visitor = MyVisitor;
+    let visitor = MyVisitor;
     let mut test_de = PktDeserializer::new(rd);
     let deserialized = test_de.deserialize(visitor).unwrap();
     assert_eq!(deserialized, expected);
