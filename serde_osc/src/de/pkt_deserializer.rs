@@ -1,6 +1,6 @@
 use std::io::Read;
 use serde::de;
-use serde::de::{Deserialize, DeserializeSeed, SeqVisitor, Visitor};
+use serde::de::Visitor;
 
 use super::error::{Error, ResultE};
 use super::msg_visitor::MsgVisitor;

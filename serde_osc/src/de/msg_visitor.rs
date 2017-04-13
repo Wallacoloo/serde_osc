@@ -2,7 +2,7 @@ use std::io::Read;
 use std::vec;
 use byteorder::{BigEndian, ReadBytesExt};
 use serde::de;
-use serde::de::{Deserialize, DeserializeSeed, SeqVisitor, Visitor};
+use serde::de::{DeserializeSeed, SeqVisitor, Visitor};
 
 use super::error::{Error, ResultE};
 use super::maybeskipcomma::MaybeSkipComma;
