@@ -9,7 +9,7 @@ use serde::de::{SeqVisitor, Visitor};
 use serde_osc::de::PktDeserializer;
 
 #[test]
-fn basic() {
+fn manual_de() {
     /// Struct we'll deserialize into
     #[derive(Debug, PartialEq)]
     struct Deserialized {

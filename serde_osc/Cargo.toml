@@ -6,3 +6,6 @@ authors = ["Colin Wallace <wallacoloo@gmail.com>"]
 [dependencies]
 byteorder = "*"
 serde = "*"
+
+[dev-dependencies]
+serde_derive = "*"
