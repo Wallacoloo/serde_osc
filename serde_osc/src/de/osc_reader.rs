@@ -4,7 +4,6 @@ use std::vec;
 use byteorder::{BigEndian, ReadBytesExt};
 
 use super::error::{Error, ResultE};
-use super::maybe_skip_comma::MaybeSkipComma;
 
 /// auto-implemented trait to parse OSC data from a Read object.
 pub trait OscReader: Read {
@@ -34,12 +33,6 @@ pub trait OscReader: Read {
         // See the UTF-8 table here: https://en.wikipedia.org/wiki/UTF-8#History
         let bytes = self.read_0term_bytes()?;
         Ok(String::from_utf8(bytes)?)
-    }
-    fn parse_typetag(&mut self) -> ResultE<MaybeSkipComma<vec::IntoIter<u8>>> {
-        // The type tag is a string type, with 4-byte null padding.
-        // The type tag must begin with a ","
-        // Note: the 1.0 specs recommend to be robust in the case of a missing type tag string.
-        self.read_0term_bytes().map(|bytes| MaybeSkipComma::new(bytes.into_iter()))
     }
     fn parse_i32(&mut self) -> ResultE<i32> {
        Ok( self.read_i32::<BigEndian>()?)

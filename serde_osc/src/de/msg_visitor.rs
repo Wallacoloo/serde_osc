@@ -62,7 +62,7 @@ impl<'a, R> MsgVisitor<'a, R>
                     (State::Arguments(empty_typestr), Ok(None))
                 } else {
                     // parse the typestring
-                    let tags = self.read.parse_typetag();
+                    let tags = self.parse_typetag();
                     match tags {
                         // Unable to parse type tag
                         Err(err) => (State::Arguments(empty_typestr), Err(err)),
@@ -75,6 +75,12 @@ impl<'a, R> MsgVisitor<'a, R>
         };
         self.state = new_state;
         osc_type
+    }
+    fn parse_typetag(&mut self) -> ResultE<MaybeSkipComma<vec::IntoIter<u8>>> {
+        // The type tag is a string type, with 4-byte null padding.
+        // The type tag must begin with a ","
+        // Note: the 1.0 specs recommend to be robust in the case of a missing type tag string.
+        self.read.read_0term_bytes().map(|bytes| MaybeSkipComma::new(bytes.into_iter()))
     }
     /// Helper for parse_next function.
     /// Pops an argument tag & attempts to parse an argument of the corresponding type.
