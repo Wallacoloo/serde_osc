@@ -67,26 +67,24 @@ impl<'a, R> MsgVisitor<'a, R>
                         // Unable to parse type tag
                         Err(err) => (State::Arguments(empty_typestr), Err(err)),
                         // Parsed: yield first argument, if it exists, else None.
-                        Ok(mut tags) => {
-                            let result = match tags.next() {
-                                None => Ok(None),
-                                Some(tag) => self.parse_arg(tag).map(|arg| Some(arg)),
-                            };
-                            (State::Arguments(tags), result)
-                        }
+                        Ok(tags) => self.pop_tag(tags),
                     }
                 }
             },
-            State::Arguments(mut tags) => {
-                let result = match tags.next() {
-                    None => Ok(None),
-                    Some(tag) => self.parse_arg(tag).map(|arg| Some(arg)),
-                };
-                (State::Arguments(tags), result)
-            },
+            State::Arguments(tags) => self.pop_tag(tags),
         };
         self.state = new_state;
         osc_type
+    }
+    /// Helper for parse_next function.
+    /// Pops an argument tag & attempts to parse an argument of the corresponding type.
+    /// Returns both the parsed argument & the new state of the parser.
+    fn pop_tag(&mut self, mut tags: MaybeSkipComma<vec::IntoIter<u8>>) -> (State, ResultE<Option<OscType>>) {
+        let result = match tags.next() {
+            None => Ok(None),
+            Some(tag) => self.parse_arg(tag).map(|arg| Some(arg)),
+        };
+        (State::Arguments(tags), result)
     }
     fn parse_arg(&mut self, typecode: u8) -> ResultE<OscType> {
         match typecode {
