@@ -10,3 +10,4 @@ pub trait NumFields {
 }
 
 pub mod de;
+pub mod ser;
