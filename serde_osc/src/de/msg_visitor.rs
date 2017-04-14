@@ -1,4 +1,5 @@
 use std::io::{Read, Take};
+use std::mem;
 use std::vec;
 use serde::de;
 use serde::de::{DeserializeSeed, SeqVisitor, Visitor};
@@ -16,7 +17,7 @@ pub struct MsgVisitor<'a, R: Read + 'a> {
 /// Which part of the OSC message is being parsed
 enum State {
     /// Deserializing the address pattern.
-    Address,
+    Address(String),
     /// Deserializing the typestring.
     Typestring,
     /// Deserializing the argument data.
@@ -39,38 +40,45 @@ enum OscType {
 impl<'a, R> MsgVisitor<'a, R>
     where R: Read + 'a
 {
-    pub fn new(read: &'a mut Take<R>) -> Self {
+    pub fn new(read: &'a mut Take<R>, address: String) -> Self {
         Self {
             read: read,
-            state: State::Address,
+            state: State::Address(address),
         }
     }
 
     fn parse_next(&mut self) -> ResultE<Option<OscType>> {
-        let typetag = match self.state {
-            State::Address => {
-                let address = self.read.parse_str()?;
-                // Successfully parsed the address component; advance to the typestring.
-                self.state = State::Typestring;
-                return Ok(Some(OscType::String(address)));
+        let (new_state, osc_type) = match mem::replace(&mut self.state, State::Typestring) {
+            State::Address(address) => {
+                // yield the address component; advance to the typestring.
+                (State::Typestring, Ok(Some(OscType::String(address.clone()))))
             },
             State::Typestring => {
                 // parse the type tag
-                let mut tags = self.read.parse_typetag()?;
-                let first_tag = tags.next();
-                self.state = State::Arguments(tags);
-                first_tag
+                let tags = self.read.parse_typetag();
+                match tags {
+                    // Unable to parse type tag
+                    Err(err) => (State::Arguments(MaybeSkipComma::new(Vec::with_capacity(0).into_iter())), Err(err)),
+                    // Parsed: yield first argument, if it exists, else None.
+                    Ok(mut tags) => {
+                        let result = match tags.next() {
+                            None => Ok(None),
+                            Some(tag) => self.parse_arg(tag).map(|arg| Some(arg)),
+                        };
+                        (State::Arguments(tags), result)
+                    }
+                }
             },
-            State::Arguments(ref mut tags) => {
-                // Because parse_arg borrows self as mut, we need to do this weird
-                // thing where we pop the typetag here, and then call parse_arg OUTSIDE
-                tags.next()
+            State::Arguments(mut tags) => {
+                let result = match tags.next() {
+                    None => Ok(None),
+                    Some(tag) => self.parse_arg(tag).map(|arg| Some(arg)),
+                };
+                (State::Arguments(tags), result)
             },
         };
-        match typetag {
-            None => Ok(None),
-            Some(tag) => self.parse_arg(tag).map(|arg| Some(arg))
-        }
+        self.state = new_state;
+        osc_type
     }
     fn parse_arg(&mut self, typecode: u8) -> ResultE<OscType> {
         match typecode {

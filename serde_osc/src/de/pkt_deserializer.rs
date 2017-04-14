@@ -4,6 +4,7 @@ use serde::de;
 use serde::de::Visitor;
 
 use super::error::{Error, ResultE};
+use super::osc_reader::OscReader;
 use super::msg_visitor::MsgVisitor;
 
 /// Deserializes an entire OSC packet, which may contain multiple messages.
@@ -11,23 +12,15 @@ use super::msg_visitor::MsgVisitor;
 /// the packet contents: EITHER a message OR a bundle.
 /// TODO: currently only parses the first packet.
 pub struct PktDeserializer<R: Read> {
-    read: R,
-    state: State,
+    reader: Option<R>,
 }
 
-enum State {
-    Unparsed,
-    Parsed,
-}
 
 impl<R> PktDeserializer<R>
     where R: Read
 {
     pub fn new(read: R) -> Self {
-        Self {
-            read: read,
-            state: State::Unparsed,
-        }
+        Self{ reader: Some(read) }
     }
 }
 
@@ -39,13 +32,17 @@ impl<'a, R> de::Deserializer for &'a mut PktDeserializer<R>
     where
         V: Visitor
     {
-        match self.state {
-            State::Unparsed => {
+        match self.reader.take() {
+            Some(mut reader) => {
                 // First, extract the length of the packet.
-                let length = self.read.read_i32::<BigEndian>()?;
-                let mut reader = self.read.by_ref().take(length as u64);
-                self.state = State::Parsed;
-                let result = visitor.visit_seq(MsgVisitor::new(&mut reader));
+                let length = reader.read_i32::<BigEndian>()?;
+                let mut reader = reader.take(length as u64);
+                // See if packet is a bundle or a message.
+                let address = reader.parse_str()?;
+                let result = match address.as_str() {
+                    "#bundle" => unimplemented!(),
+                    _ => visitor.visit_seq(MsgVisitor::new(&mut reader, address)),
+                };
                 // If the consumer only handled a portion of the sequence, we still
                 // need to advance the reader so as to be ready for any next message.
                 // TODO: it should be possible to read any extra chars w/o allocating.
@@ -56,7 +53,7 @@ impl<'a, R> de::Deserializer for &'a mut PktDeserializer<R>
                 reader.read_exact(&mut extra_chars)?;
                 result
             },
-            State::Parsed => Err(Error::ArgMiscount),
+            None => Err(Error::ArgMiscount),
         }
     }
 
