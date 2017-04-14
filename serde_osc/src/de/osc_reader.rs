@@ -1,6 +1,5 @@
 use std::convert::TryInto;
 use std::io::Read;
-use std::vec;
 use byteorder::{BigEndian, ReadBytesExt};
 
 use super::error::{Error, ResultE};
