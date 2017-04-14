@@ -10,6 +10,3 @@ pub trait NumFields {
 }
 
 pub mod de;
-mod oscarg;
-
-pub use oscarg::OscArg;

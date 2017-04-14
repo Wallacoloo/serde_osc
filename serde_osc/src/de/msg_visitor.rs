@@ -7,7 +7,6 @@ use serde::de::{DeserializeSeed, SeqVisitor, Visitor};
 
 use super::error::{Error, ResultE};
 use super::maybeskipcomma::MaybeSkipComma;
-use oscarg::OscArg;
 
 /// Deserializes a single message, within a packet.
 pub struct MsgVisitor<'a, R: Read + 'a> {
@@ -29,8 +28,12 @@ enum State {
 
 /// Struct to deserialize a single element from the OSC message sequence.
 /// (e.g. just the address, or the first argument, etc).
-struct MsgItemDeserializer {
-    item: OscArg,
+enum OscType {
+    I32(i32),
+    F32(f32),
+    String(String),
+    Blob(Vec<u8>),
+    // TODO: Bundle
 }
 
 
@@ -77,13 +80,13 @@ impl<'a, R> MsgVisitor<'a, R>
         self.read_0term_bytes().map(|bytes| MaybeSkipComma::new(bytes.into_iter()))
     }
 
-    fn parse_next(&mut self) -> ResultE<Option<OscArg>> {
+    fn parse_next(&mut self) -> ResultE<Option<OscType>> {
         let typetag = match self.state {
             State::Address => {
                 let address = self.parse_str()?;
                 // Successfully parsed the address component; advance to the typestring.
                 self.state = State::Typestring;
-                return Ok(Some(OscArg::s(address)));
+                return Ok(Some(OscType::String(address)));
             },
             State::Typestring => {
                 // parse the type tag
@@ -103,12 +106,12 @@ impl<'a, R> MsgVisitor<'a, R>
             Some(tag) => self.parse_arg(tag).map(|arg| Some(arg))
         }
     }
-    fn parse_arg(&mut self, typecode: u8) -> ResultE<OscArg> {
+    fn parse_arg(&mut self, typecode: u8) -> ResultE<OscType> {
         match typecode {
-            b'i' => self.parse_i32().map(|i| { OscArg::i(i) }),
-            b'f' => self.parse_f32().map(|f| { OscArg::f(f) }),
-            b's' => self.parse_str().map(|s| { OscArg::s(s) }),
-            b'b' => self.parse_blob().map(|b| { OscArg::b(b) }),
+            b'i' => self.parse_i32().map(|i| { OscType::I32(i) }),
+            b'f' => self.parse_f32().map(|f| { OscType::F32(f) }),
+            b's' => self.parse_str().map(|s| { OscType::String(s) }),
+            b'b' => self.parse_blob().map(|b| { OscType::Blob(b) }),
             c => Err(Error::UnknownType(c)),
         }
     }
@@ -136,21 +139,21 @@ impl<'a, R> MsgVisitor<'a, R>
 
 
 
-impl de::Deserializer for MsgItemDeserializer {
+impl de::Deserializer for OscType {
     type Error = Error;
     // deserializes a single item from the message, consuming self.
     fn deserialize<V>(self, visitor: V) -> ResultE<V::Value>
     where
         V: Visitor
     {
-        match self.item {
-            OscArg::i(i) => visitor.visit_i32(i),
-            OscArg::f(f) => visitor.visit_f32(f),
-            OscArg::s(s) => visitor.visit_string(s),
+        match self {
+            OscType::I32(i) => visitor.visit_i32(i),
+            OscType::F32(f) => visitor.visit_f32(f),
+            OscType::String(s) => visitor.visit_string(s),
             // TODO: If the user is attempting to deserialize a Vec<u8>, this
             //   will error! We should make use of the deserialize_seq function
             //   in this case.
-            OscArg::b(b) => visitor.visit_byte_buf(b),
+            OscType::Blob(b) => visitor.visit_byte_buf(b),
         }
     }
 
@@ -177,7 +180,7 @@ impl<'a, R> SeqVisitor for MsgVisitor<'a, R>
         match value {
             // end of sequence
             None => Ok(None),
-            Some(osc_arg) => seed.deserialize(MsgItemDeserializer{ item: osc_arg })
+            Some(osc_arg) => seed.deserialize(osc_arg)
                 .map(|value| { Some(value) }),
         }
     }
