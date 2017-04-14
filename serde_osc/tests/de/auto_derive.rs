@@ -1,8 +1,3 @@
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_osc;
-
 use std::io::Cursor;
 use serde::Deserialize;
 use serde::bytes::ByteBuf;

@@ -1,6 +1,3 @@
-extern crate serde;
-extern crate serde_osc;
-
 use std::fmt;
 use std::io::Cursor;
 use serde::Deserializer;
