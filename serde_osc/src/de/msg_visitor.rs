@@ -140,8 +140,7 @@ impl<'a, R> SeqVisitor for MsgVisitor<'a, R>
         match value {
             // end of sequence
             None => Ok(None),
-            Some(osc_arg) => seed.deserialize(osc_arg)
-                .map(|value| { Some(value) }),
+            Some(osc_arg) => seed.deserialize(osc_arg).map(Some),
         }
     }
 }

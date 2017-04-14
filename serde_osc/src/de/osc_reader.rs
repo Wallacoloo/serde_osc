@@ -47,6 +47,13 @@ pub trait OscReader: Read {
     fn parse_f32(&mut self) -> ResultE<f32> {
         Ok(self.read_f32::<BigEndian>()?)
     }
+    /// "Time tags are represented by a 64 bit fixed point number.
+    ///  The first 32 bits specify the number of seconds since midnight on January 1, 1900,
+    ///  and the last 32 bits specify fractional parts of a second to a precision of about 200 picoseconds.
+    ///  This is the representation used by Internet NTP timestamps."
+    fn parse_timetag(&mut self) -> ResultE<u64> {
+       Ok( self.read_u64::<BigEndian>()?)
+    }
     /// Read an OSC blob & verify padding.
     /// A blob consists of a length + u8 array.
     fn parse_blob(&mut self) -> ResultE<Vec<u8>> {
