@@ -4,8 +4,10 @@ use serde::de;
 use serde::de::{DeserializeSeed, SeqVisitor, Visitor};
 
 use super::error::{Error, ResultE};
+use super::iter_visitor::IterVisitor;
 use super::osc_reader::OscReader;
 use super::pkt_deserializer::PktDeserializer;
+use super::prim_deserializer::PrimDeserializer;
 
 /// Deserializes a single message, within a packet.
 pub struct BundleVisitor<'a, R: Read + 'a> {
@@ -23,7 +25,7 @@ enum State {
 
 /// Struct to deserialize a single element from the OSC bundle
 enum BundleElement<'a, R: Read + 'a> {
-    TimeTag(u64),
+    TimeTag((u32, u32)),
     Packet(PktDeserializer<'a, R>),
 }
 
@@ -50,7 +52,9 @@ impl<'a, R> de::Deserializer for BundleElement<'a, R>
         V: Visitor
     {
         match self {
-            BundleElement::TimeTag(time) => visitor.visit_u64(time),
+            BundleElement::TimeTag((sec, frac)) =>
+                visitor.visit_seq(IterVisitor([sec, frac].into_iter().cloned()
+                    .map(PrimDeserializer))),
             BundleElement::Packet(mut pkt) => pkt.deserialize(visitor),
         }
     }

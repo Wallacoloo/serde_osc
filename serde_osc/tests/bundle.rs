@@ -21,12 +21,12 @@ fn bundle() {
     }
     #[derive(Debug, PartialEq, Deserialize)]
     struct Bundle {
-        timestamp: u64,
+        timestamp: (u32, u32),
         msg1: Msg1,
         msg2: Msg2,
     }
     let expected = Bundle {
-        timestamp: 0x0102030405060708,
+        timestamp: (0x01020304, 0x05060708),
         msg1: Msg1 {
             address: "/m1".to_owned(),
             arg_0: 0x5eeeeeed,

@@ -51,8 +51,10 @@ pub trait OscReader: Read {
     ///  The first 32 bits specify the number of seconds since midnight on January 1, 1900,
     ///  and the last 32 bits specify fractional parts of a second to a precision of about 200 picoseconds.
     ///  This is the representation used by Internet NTP timestamps."
-    fn parse_timetag(&mut self) -> ResultE<u64> {
-       Ok( self.read_u64::<BigEndian>()?)
+    fn parse_timetag(&mut self) -> ResultE<(u32, u32)> {
+       let sec = self.read_u32::<BigEndian>()?;
+       let frac = self.read_u32::<BigEndian>()?;
+       Ok((sec, frac))
     }
     /// Read an OSC blob & verify padding.
     /// A blob consists of a length + u8 array.
