@@ -43,9 +43,18 @@ impl<'a, R> de::Deserializer for &'a mut PktDeserializer<R>
             State::Unparsed => {
                 // First, extract the length of the packet.
                 let length = self.read.read_i32::<BigEndian>()?;
-                let reader = self.read.by_ref().take(length as u64);
+                let mut reader = self.read.by_ref().take(length as u64);
                 self.state = State::Parsed;
-                visitor.visit_seq(MsgVisitor::new(reader))
+                let result = visitor.visit_seq(MsgVisitor::new(&mut reader));
+                // If the consumer only handled a portion of the sequence, we still
+                // need to advance the reader so as to be ready for any next message.
+                // TODO: it should be possible to read any extra chars w/o allocating.
+                // Tracking: https://github.com/rust-lang/rust/issues/13989
+                let size = reader.limit() as usize;
+                let mut extra_chars = Vec::with_capacity(size);
+                extra_chars.resize(size, Default::default());
+                reader.read_exact(&mut extra_chars)?;
+                result
             },
             State::Parsed => Err(Error::ArgMiscount),
         }

@@ -10,8 +10,8 @@ use super::maybeskipcomma::MaybeSkipComma;
 use oscarg::OscArg;
 
 /// Deserializes a single message, within a packet.
-pub struct MsgVisitor<R: Read> {
-    read: Take<R>,
+pub struct MsgVisitor<'a, R: Read + 'a> {
+    read: &'a mut Take<R>,
     state: State,
 }
 
@@ -34,10 +34,10 @@ struct MsgItemDeserializer {
 }
 
 
-impl<R> MsgVisitor<R>
-    where R: Read
+impl<'a, R> MsgVisitor<'a, R>
+    where R: Read + 'a
 {
-    pub fn new(read: Take<R>) -> Self {
+    pub fn new(read: &'a mut Take<R>) -> Self {
         Self {
             read: read,
             state: State::Address,
@@ -99,14 +99,7 @@ impl<R> MsgVisitor<R>
             },
         };
         match typetag {
-            // End of message. Make sure we actually used all the bytes we were given,
-            // otherwise any potential next message in the bundle may be parsed incorrectly!
-            None => match self.read.limit() {
-                // all bytes read = Ok
-                0 => Ok(None),
-                // extraneous bytes = Error!
-                _ => Err(Error::ArgMiscount),
-            },
+            None => Ok(None),
             Some(tag) => self.parse_arg(tag).map(|arg| Some(arg))
         }
     }
@@ -171,8 +164,8 @@ impl de::Deserializer for MsgItemDeserializer {
 }
 
 
-impl<R> SeqVisitor for MsgVisitor<R>
-    where R: Read
+impl<'a, R> SeqVisitor for MsgVisitor<'a, R>
+    where R: Read + 'a
 {
     type Error = Error;
     fn visit_seed<T>(&mut self, seed: T) -> ResultE<Option<T::Value>>
