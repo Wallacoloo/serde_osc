@@ -54,18 +54,26 @@ impl<'a, R> MsgVisitor<'a, R>
                 (State::Typestring, Ok(Some(OscType::String(address.clone()))))
             },
             State::Typestring => {
-                // parse the type tag
-                let tags = self.read.parse_typetag();
-                match tags {
-                    // Unable to parse type tag
-                    Err(err) => (State::Arguments(MaybeSkipComma::new(Vec::with_capacity(0).into_iter())), Err(err)),
-                    // Parsed: yield first argument, if it exists, else None.
-                    Ok(mut tags) => {
-                        let result = match tags.next() {
-                            None => Ok(None),
-                            Some(tag) => self.parse_arg(tag).map(|arg| Some(arg)),
-                        };
-                        (State::Arguments(tags), result)
+                let empty_typestr = MaybeSkipComma::new(Vec::with_capacity(0).into_iter());
+                // If we are at the end of our buffer, then there won't be a typestring
+                // and any attempt to parse it would error.
+                // But the 1.0 specs recommend typestrings be optional, so return Ok(..)
+                if self.read.limit() == 0 {
+                    (State::Arguments(empty_typestr), Ok(None))
+                } else {
+                    // parse the typestring
+                    let tags = self.read.parse_typetag();
+                    match tags {
+                        // Unable to parse type tag
+                        Err(err) => (State::Arguments(empty_typestr), Err(err)),
+                        // Parsed: yield first argument, if it exists, else None.
+                        Ok(mut tags) => {
+                            let result = match tags.next() {
+                                None => Ok(None),
+                                Some(tag) => self.parse_arg(tag).map(|arg| Some(arg)),
+                            };
+                            (State::Arguments(tags), result)
+                        }
                     }
                 }
             },
