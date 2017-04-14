@@ -1,11 +1,10 @@
-use std::convert::TryInto;
 use std::io::{Read, Take};
 use std::vec;
-use byteorder::{BigEndian, ReadBytesExt};
 use serde::de;
 use serde::de::{DeserializeSeed, SeqVisitor, Visitor};
 
 use super::error::{Error, ResultE};
+use super::osc_reader::OscReader;
 use super::maybeskipcomma::MaybeSkipComma;
 
 /// Deserializes a single message, within a packet.
@@ -46,51 +45,18 @@ impl<'a, R> MsgVisitor<'a, R>
             state: State::Address,
         }
     }
-    /// Strings in OSC are ascii and null-terminated.
-    /// Strict specification is 1-4 null terminators, to make them end on a 4-byte boundary.
-    fn read_0term_bytes(&mut self) -> ResultE<Vec<u8>> {
-        let mut data = Vec::new();
-        // Because of the 4-byte required padding, we can process 4 characters at a time
-        let mut buf: [u8; 4] = [0, 0, 0, 0];
-        let mut num_zeros = 0;
-        while num_zeros == 0 {
-            self.read.read_exact(&mut buf)?;
-            // Copy the NON-NULL characters to the buffer.
-            num_zeros = buf.iter().filter(|c| **c == 0).count();
-            if buf[4-num_zeros..4].iter().any(|c| *c != 0) {
-                // We had data after the null terminator.
-                return Err(Error::BadPadding);
-            }
-            data.extend_from_slice(&buf[0..4-num_zeros]);
-        }
-        Ok(data)
-    }
-    fn parse_str(&mut self) -> ResultE<String> {
-        // Note: although OSC specifies ascii only, we may have data >= 128 in the vector.
-        // We can safely assume a UTF-8 encoding, because no byte of any multibyte UTF-8
-        // contains a zero; the only zero possible in a UTF-8 string is the ASCII zero.
-        // See the UTF-8 table here: https://en.wikipedia.org/wiki/UTF-8#History
-        let bytes = self.read_0term_bytes()?;
-        Ok(String::from_utf8(bytes)?)
-    }
-    fn parse_typetag(&mut self) -> ResultE<MaybeSkipComma<vec::IntoIter<u8>>> {
-        // The type tag is a string type, with 4-byte null padding.
-        // The type tag must begin with a ","
-        // Note: the 1.0 specs recommend to be robust in the case of a missing type tag string.
-        self.read_0term_bytes().map(|bytes| MaybeSkipComma::new(bytes.into_iter()))
-    }
 
     fn parse_next(&mut self) -> ResultE<Option<OscType>> {
         let typetag = match self.state {
             State::Address => {
-                let address = self.parse_str()?;
+                let address = self.read.parse_str()?;
                 // Successfully parsed the address component; advance to the typestring.
                 self.state = State::Typestring;
                 return Ok(Some(OscType::String(address)));
             },
             State::Typestring => {
                 // parse the type tag
-                let mut tags = self.parse_typetag()?;
+                let mut tags = self.read.parse_typetag()?;
                 let first_tag = tags.next();
                 self.state = State::Arguments(tags);
                 first_tag
@@ -108,31 +74,11 @@ impl<'a, R> MsgVisitor<'a, R>
     }
     fn parse_arg(&mut self, typecode: u8) -> ResultE<OscType> {
         match typecode {
-            b'i' => self.parse_i32().map(|i| { OscType::I32(i) }),
-            b'f' => self.parse_f32().map(|f| { OscType::F32(f) }),
-            b's' => self.parse_str().map(|s| { OscType::String(s) }),
-            b'b' => self.parse_blob().map(|b| { OscType::Blob(b) }),
+            b'i' => self.read.parse_i32().map(|i| { OscType::I32(i) }),
+            b'f' => self.read.parse_f32().map(|f| { OscType::F32(f) }),
+            b's' => self.read.parse_str().map(|s| { OscType::String(s) }),
+            b'b' => self.read.parse_blob().map(|b| { OscType::Blob(b) }),
             c => Err(Error::UnknownType(c)),
-        }
-    }
-    fn parse_i32(&mut self) -> ResultE<i32> {
-       Ok( self.read.read_i32::<BigEndian>()?)
-    }
-    fn parse_f32(&mut self) -> ResultE<f32> {
-        Ok(self.read.read_f32::<BigEndian>()?)
-    }
-    fn parse_blob(&mut self) -> ResultE<Vec<u8>> {
-        let size: usize = self.parse_i32()?.try_into()?;
-        // Blobs are padded to a 4-byte boundary
-        let padded_size = (size + 3) & !0x3;
-        // Read EXACTLY this much data:
-        let mut data = vec![0; padded_size];
-        self.read.read_exact(&mut data)?;
-        // Ensure these extra bytes where NULL (sanity check)
-        if data.drain(size..padded_size).all(|c| c == 0) {
-            Ok(data)
-        } else {
-            Err(Error::BadPadding)
         }
     }
 }
