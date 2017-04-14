@@ -6,7 +6,7 @@ use serde::de::{DeserializeSeed, SeqVisitor, Visitor};
 
 use super::error::{Error, ResultE};
 use super::osc_reader::OscReader;
-use super::maybeskipcomma::MaybeSkipComma;
+use super::maybe_skip_comma::MaybeSkipComma;
 
 /// Deserializes a single message, within a packet.
 pub struct MsgVisitor<'a, R: Read + 'a> {

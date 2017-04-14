@@ -3,7 +3,7 @@
 mod bundle_visitor;
 mod error;
 mod iter_visitor;
-mod maybeskipcomma;
+mod maybe_skip_comma;
 mod msg_visitor;
 mod osc_reader;
 mod pkt_deserializer;

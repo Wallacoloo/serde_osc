@@ -4,7 +4,7 @@ use std::vec;
 use byteorder::{BigEndian, ReadBytesExt};
 
 use super::error::{Error, ResultE};
-use super::maybeskipcomma::MaybeSkipComma;
+use super::maybe_skip_comma::MaybeSkipComma;
 
 /// auto-implemented trait to parse OSC data from a Read object.
 pub trait OscReader: Read {
