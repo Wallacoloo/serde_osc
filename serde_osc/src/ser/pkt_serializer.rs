@@ -1,13 +1,16 @@
+use std::convert::TryInto;
 use std::io::{Cursor, Write};
+use std::mem;
+use byteorder::WriteBytesExt;
 use serde::ser::{Impossible, Serialize, Serializer, SerializeSeq, SerializeStruct};
 
 use super::error::{Error, ResultE};
 use super::osc_writer::OscWriter;
 
-pub struct PktSerializer {
+pub struct PktSerializer<W: Write> {
     /// Because OSC makes use of length prefixes,
     /// we have to buffer the entire output before we can write the length.
-    /// TODO: we can use a seekable writer to mitigate this.
+    output: W,
     state: State,
 }
 
@@ -17,21 +20,54 @@ enum State {
     /// User has called serialize_seq (etc), and we're waiting on the next
     /// call to determine if we are a Bundle or a Message.
     ProbingPktType,
-    /// We are a message: (typetag, argument data)
+    /// We are a message: (addr+typetag, argument data)
     IsMessage(Cursor<Vec<u8>>, Cursor<Vec<u8>>),
     IsBundle,
+    Finalized,
 }
 
-impl PktSerializer {
-    pub fn new() -> Self {
-        Self{ state: State::Uninitialized }
+impl<W: Write> PktSerializer<W> {
+    pub fn new(output: W) -> Self {
+        Self{ output, state: State::Uninitialized }
+    }
+    /// Write all output to the writer; disallow new output.
+    /// This is necessary because the packet header depends on
+    /// all the packet content
+    pub fn finalize(&mut self) -> ResultE<()> {
+        match mem::replace(&mut self.state, State::Finalized) {
+            State::IsMessage(typetag, args) => {
+                // Unwrap the cursor to a Vec<u8>
+                let typetag = typetag.into_inner();
+                let args = args.into_inner();
+
+                // tag needs to be null-terminated & padded to 4-byte boundary.
+                let tag_pad = 4 - (typetag.len() % 4);
+                let payload_size = typetag.len() + tag_pad + args.len();
+                if payload_size % 4 != 0 {
+                    // Sanity check; OSC requires packets to be a multiple of 4 bytes.
+                    return Err(Error::BadFormat);
+                }
+
+                // Write the packet length
+                self.output.osc_write_i32(payload_size.try_into()?)?;
+                // Write the address and type tag
+                self.output.write_all(&typetag)?;
+                let zeros = b"\0\0\0\0";
+                self.output.write_all(&zeros[..tag_pad])?;
+                // Write the arguments
+                Ok(self.output.write_all(&args)?)
+            },
+            State::IsBundle => unimplemented!(),
+            // OSC packets must be either a message or a bundle.
+            _ => Err(Error::BadFormat),
+        }
     }
 }
 
-impl<'a> Serializer for &'a mut PktSerializer {
+impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
     type Ok = ();
     type Error = Error;
-    type SerializeSeq = PktSerializer;
+    type SerializeSeq = Compound<'a, W>;
     type SerializeTuple = Impossible<Self::Ok, Error>;
     type SerializeTupleStruct = Impossible<Self::Ok, Error>;
     type SerializeTupleVariant = Impossible<Self::Ok, Error>;
@@ -95,7 +131,12 @@ impl<'a> Serializer for &'a mut PktSerializer {
             // it must be the address. Only messages have addresses.
             State::ProbingPktType => {
                 assert!(value != "#bundle");
-                self.state = State::IsMessage(Cursor::new(vec![]), Cursor::new(vec![]));
+                let mut addr_typetag = Cursor::new(Vec::new());
+                addr_typetag.osc_write_str(value)?;
+                // the type tag start is denoted by a comma.
+                addr_typetag.write_u8(b',')?;
+                // add necessary padding
+                self.state = State::IsMessage(addr_typetag, Cursor::new(vec![]));
                 Ok(())
             },
             State::IsMessage(ref mut typetag, ref mut args) => {
@@ -171,7 +212,9 @@ impl<'a> Serializer for &'a mut PktSerializer {
         match self.state {
             // Good; all packets are sequences. Now we probe the packet type
             State::Uninitialized => {
-                Ok(PktSerializer{ state: State::ProbingPktType })
+                //Ok(PktSerializer{ state: State::ProbingPktType(write.by_ref()) })
+                self.state = State::ProbingPktType;
+                Ok(Compound{ ser: self })
             },
             // If the first element of the packet is another sequence,
             // it must be the (u32, u32) timetag, which is only packaged with bundles.
@@ -241,8 +284,12 @@ impl<'a> Serializer for &'a mut PktSerializer {
     }
 }
 
+pub struct Compound<'a, W: Write+'a> {
+    ser: &'a mut PktSerializer<W>,
+}
 
-impl SerializeSeq for PktSerializer {
+
+impl<'a, W: Write + 'a> SerializeSeq for Compound<'a, W> {
     type Ok = ();
     type Error = Error;
 
@@ -255,15 +302,15 @@ impl SerializeSeq for PktSerializer {
         //   then we become a packet.
         //   Accept the timecode, and then only sequences that in turn become
         //   PktSerializers, after that.
-        value.serialize(self)
+        value.serialize(&mut *self.ser)
     }
 
     fn end(self) -> ResultE<()> {
-        unimplemented!()
+        self.ser.finalize()
     }
 }
 
-impl SerializeStruct for PktSerializer {
+impl<'a, W: Write + 'a> SerializeStruct for Compound<'a, W> {
     type Ok = ();
     type Error = Error;
 
@@ -274,6 +321,6 @@ impl SerializeStruct for PktSerializer {
     }
 
     fn end(self) -> ResultE<()> {
-        unimplemented!()
+        SerializeSeq::end(self)
     }
 }

@@ -17,6 +17,9 @@ pub enum Error {
     /// or not in the proper place (e.g. f32 can only be serialized within a message;
     /// not in the toplevel packet).
     UnsupportedType,
+    /// Packet doesn't obey correct formatting;
+    /// most probably it is empty (neither a message nor a bundle).
+    BadFormat,
     /// Error encountered due to std::io::Write
     Io(io::Error),
     /// Error converting to a valid OSC data type.
@@ -46,6 +49,7 @@ impl Display for Error {
         match *self {
             Error::Message(ref msg) => write!(f, "Serializer Error: {}", msg),
             Error::UnsupportedType => write!(f, "Unsupported serialization type"),
+            Error::BadFormat => write!(f, "Bad OSC packet format"),
             Error::Io(ref err) => err.fmt(f),
             Error::BadCast(ref err) => err.fmt(f),
         }
@@ -57,6 +61,7 @@ impl std::error::Error for Error {
         match *self {
             Error::Message(ref msg) => msg,
             Error::UnsupportedType => "Unsupported serialization type",
+            Error::BadFormat => "Bad OSC packet format",
             Error::Io(ref io_error) => io_error.description(),
             Error::BadCast(ref cast_error) => cast_error.description(),
         }
