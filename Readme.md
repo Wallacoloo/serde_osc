@@ -8,11 +8,11 @@ Examples will be published once the library is more stable/fully developed.
 
 Development status
 ----
- [x] Deserialization of both OSC messages and bundles into any sequence type (structs, tuples, etc).
- [x] Serialization of OSC message structs.
- [] Serialization of OSC message into any sequence type.
- [] Serialization of OSC bundles.
- [] Macros to aid in addressing messages (e.g. serializing the address of a
+ - [x] Deserialization of both OSC messages and bundles into any sequence type (structs, tuples, etc).
+ - [x] Serialization of OSC message structs.
+ - [ ] Serialization of OSC message into any sequence type.
+ - [ ] Serialization of OSC bundles.
+ - [ ] Macros to aid in addressing messages (e.g. serializing the address of a
 message without needing to store that address as a String in the struct/tuple being serialized)
 
 This library is under active development and will likely see some interface-breaking changes.
