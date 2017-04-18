@@ -132,15 +132,6 @@ impl<'a, W: Write + 'a> SerializeSeq for PktContents<'a, W> {
     fn serialize_element<'b, T: ?Sized>(&'b mut self, value: &T) -> ResultE<()>
         where T: Serialize
     {
-        //value.serialize(&mut PktContents::UnknownType(self.packet))
-        /*match *self {
-            // (u32, u32) timetag of the bundle or the message address
-            PktContents::UnknownType(_) => unimplemented!(),
-            PktContents::Msg(ref mut msg) => {
-                value.serialize(msg)
-            },
-            PktContents::Bundle(_) => unimplemented!(),
-        }*/
         match self.state {
             State::UnknownType => {
                 // Determine the type of the packet.
@@ -163,13 +154,22 @@ impl<'a, W: Write + 'a> SerializeSeq for PktContents<'a, W> {
                         });
                         Ok(())
                     },
-                    PktType::Bundle => unimplemented!()
+                    PktType::Bundle => {
+                        self.state = State::Bundle(BundleSerializer{
+                            contents: decoder.data(),
+                        });
+                        Ok(())
+                    },
                 }
             },
             State::Msg(ref mut msg) => {
                 value.serialize(msg)
             },
-            State::Bundle(_) => unimplemented!(),
+            State::Bundle(ref mut bundle) => {
+                // each bundle element is itself a packet.
+                let mut ser = PktSerializer{ output: bundle.contents.by_ref() };
+                value.serialize(&mut ser)
+            },
         }
     }
 
@@ -198,7 +198,21 @@ impl<'a, W: Write + 'a> SerializeSeq for PktContents<'a, W> {
                 Ok(self.output.output.write_all(&args)?)
             },
             // Write the bundle header & data to the output
-            State::Bundle(_) => unimplemented!(),
+            State::Bundle(bundle) => {
+                let payload = bundle.contents.into_inner();
+                // Add 8 because we have yet to write the #bundle address
+                let payload_size = 8 + payload.len();
+                if payload_size % 4 != 0 {
+                    // Sanity check; OSC requires packets to be a multiple of 4 bytes.
+                    return Err(Error::BadFormat);
+                }
+                // Write the packet length
+                let output = &mut self.output.output;
+                output.osc_write_i32(payload_size.try_into()?)?;
+                // Write the packet payload
+                output.osc_write_str("#bundle")?;
+                Ok(output.write_all(&payload)?)
+            }
         }
     }
 }

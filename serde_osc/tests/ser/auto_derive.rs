@@ -5,7 +5,7 @@ use serde_osc::ser::PktSerializer;
 
 
 #[test]
-fn auto_de() {
+fn auto_ser() {
     /// Struct we'll serialize
     #[derive(Debug, PartialEq, Serialize)]
     struct Serialized {
