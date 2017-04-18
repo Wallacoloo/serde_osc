@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use std::io::{Cursor, Write};
 use std::mem;
 use byteorder::WriteBytesExt;
-use serde::ser::{Impossible, Serialize, Serializer, SerializeSeq, SerializeStruct};
+use serde::ser::{Impossible, Serialize, Serializer, SerializeSeq, SerializeStruct, SerializeTuple};
 
 use super::error::{Error, ResultE};
 use super::osc_writer::OscWriter;
@@ -22,7 +22,12 @@ enum State {
     ProbingPktType,
     /// We are a message: (addr+typetag, argument data)
     IsMessage(Cursor<Vec<u8>>, Cursor<Vec<u8>>),
-    IsBundle,
+    /// Parsing the (u32, u32) time tag of a bundle.
+    ParsingTime(Option<u32>, Option<u32>),
+    /// We are a bundle. The Cursor cursor owns a Vec<u8> which stores all the
+    /// messages currently seen in this bundle, and the PktSerializer itself
+    /// stores data related to serializing the current element in the bundle.
+    IsBundle(Box<PktSerializer<Cursor<Vec<u8>>>>),
     Finalized,
 }
 
@@ -33,7 +38,17 @@ impl<W: Write> PktSerializer<W> {
     /// Write all output to the writer; disallow new output.
     /// This is necessary because the packet header depends on
     /// all the packet content
-    pub fn finalize(&mut self) -> ResultE<()> {
+    fn finalize(&mut self) -> ResultE<()> {
+        if let State::IsBundle(ref mut contents) = self.state {
+            if let State::Uninitialized = contents.state {
+            } else {
+                // Relay the end-of sequence command to the bundle contents
+                contents.finalize()?;
+                if let State::Finalized = contents.state {
+                    contents.state = State::Uninitialized;
+                }
+            }
+        }
         match mem::replace(&mut self.state, State::Finalized) {
             State::IsMessage(typetag, args) => {
                 // Unwrap the cursor to a Vec<u8>
@@ -57,7 +72,28 @@ impl<W: Write> PktSerializer<W> {
                 // Write the arguments
                 Ok(self.output.write_all(&args)?)
             },
-            State::IsBundle => unimplemented!(),
+            State::ParsingTime(Some(first), Some(second)) => {
+                // Create the actual bundle, and write the timetag
+                let mut bundle_data = Cursor::new(Vec::new());
+                bundle_data.osc_write_timetag((first, second))?;
+                // Delegate all future calls to a new bundle object
+                self.state = State::IsBundle(Box::new(
+                    PktSerializer::new(bundle_data)
+                ));
+                Ok(())
+            },
+            State::IsBundle(contents) => {
+                // Unwrap the bundled writer (Vec<u8>)
+                let payload = contents.output.into_inner();
+                let payload_size = payload.len();
+                if payload_size % 4 != 0 {
+                    // Sanity check; OSC requires packets to be a multiple of 4 bytes.
+                    return Err(Error::BadFormat);
+                }
+                // Write the packet length
+                self.output.osc_write_i32(payload_size.try_into()?)?;
+                Ok(self.output.write_all(&payload)?)
+            }
             // OSC packets must be either a message or a bundle.
             _ => Err(Error::BadFormat),
         }
@@ -68,7 +104,7 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
     type Ok = ();
     type Error = Error;
     type SerializeSeq = Compound<'a, W>;
-    type SerializeTuple = Impossible<Self::Ok, Error>;
+    type SerializeTuple = Compound<'a, W>;
     type SerializeTupleStruct = Impossible<Self::Ok, Error>;
     type SerializeTupleVariant = Impossible<Self::Ok, Error>;
     type SerializeMap = Impossible<Self::Ok, Error>;
@@ -91,6 +127,8 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
                 args.osc_write_i32(value)?;
                 Ok(())
             },
+            // Relay the data to the bundle element
+            State::IsBundle(ref mut pkt) => pkt.serialize_i32(value),
             _ => Err(Error::UnsupportedType),
         }
     }
@@ -103,8 +141,22 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
     fn serialize_u16(self, _: u16) -> ResultE<Self::Ok> {
         Err(Error::UnsupportedType)
     }
-    fn serialize_u32(self, _: u32) -> ResultE<Self::Ok> {
-        Err(Error::UnsupportedType)
+    fn serialize_u32(self, value: u32) -> ResultE<Self::Ok> {
+        let new_state = match self.state {
+            // All possible time tags are encodable
+            State::ParsingTime(None, None) => Ok(Some(State::ParsingTime(Some(value), None))),
+            State::ParsingTime(Some(first), None) => Ok(Some(State::ParsingTime(Some(first), Some(value)))),
+            // Relay to bundle contents
+            State::IsBundle(ref mut contents) => {
+                contents.serialize_u32(value)?;
+                Ok(None)
+            },
+            _ => Err(Error::UnsupportedType),
+        }?;
+        if let Some(new_state) = new_state {
+            self.state = new_state;
+        }
+        Ok(())
     }
     fn serialize_u64(self, _: u64) -> ResultE<Self::Ok> {
         Err(Error::UnsupportedType)
@@ -115,7 +167,9 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
                 typetag.write_f32_tag()?;
                 args.osc_write_f32(value)?;
                 Ok(())
-            }
+            },
+            // Relay the data to the bundle element
+            State::IsBundle(ref mut pkt) => pkt.serialize_f32(value),
             _ => Err(Error::UnsupportedType),
         }
     }
@@ -144,6 +198,8 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
                 args.osc_write_str(value)?;
                 Ok(())
             },
+            // Relay the data to the bundle element
+            State::IsBundle(ref mut pkt) => pkt.serialize_str(value),
             _ => Err(Error::UnsupportedType),
         }
     }
@@ -153,7 +209,9 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
                 typetag.write_blob_tag()?;
                 args.osc_write_blob(value)?;
                 Ok(())
-            }
+            },
+            // Relay the data to the bundle element
+            State::IsBundle(ref mut pkt) => pkt.serialize_bytes(value),
             _ => Err(Error::UnsupportedType),
         }
     }
@@ -206,24 +264,26 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
     }
     fn serialize_seq(
         self, 
-        _: Option<usize>
+        _size: Option<usize>
     ) -> ResultE<Self::SerializeSeq>
     {
-        match self.state {
+        let new_state = match self.state {
             // Good; all packets are sequences. Now we probe the packet type
-            State::Uninitialized => {
-                //Ok(PktSerializer{ state: State::ProbingPktType(write.by_ref()) })
-                self.state = State::ProbingPktType;
-                Ok(Compound{ ser: self })
-            },
+            State::Uninitialized => Ok(Some(State::ProbingPktType)),
             // If the first element of the packet is another sequence,
             // it must be the (u32, u32) timetag, which is only packaged with bundles.
-            State::ProbingPktType => {
-                //Ok(PktSerializer{ state: State::IsBundle })
-                unimplemented!()
+            State::ProbingPktType => Ok(Some(State::ParsingTime(None, None))),
+            // Relay the data to the bundle element
+            State::IsBundle(ref mut pkt) => {
+                pkt.serialize_seq(_size)?;
+                Ok(None)
             },
-            _ => Err(Error::UnsupportedType),
+            _ => { unimplemented!(); Err(Error::UnsupportedType) },
+        }?;
+        if let Some(new_state) = new_state {
+            self.state = new_state;
         }
+        Ok(Compound{ ser: self })
     }
     fn serialize_seq_fixed_size(
         self, 
@@ -234,10 +294,10 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
     }
     fn serialize_tuple(
         self, 
-        _size: usize
+        size: usize
     ) -> ResultE<Self::SerializeTuple>
     {
-        Err(Error::UnsupportedType)
+        self.serialize_seq(Some(size))
     }
     fn serialize_tuple_struct(
         self, 
@@ -317,7 +377,22 @@ impl<'a, W: Write + 'a> SerializeStruct for Compound<'a, W> {
     fn serialize_field<T: ?Sized>(&mut self, _key: &'static str, value: &T) -> ResultE<()>
         where T: Serialize
     {
-        self.serialize_element(value)
+        SerializeSeq::serialize_element(self, value)
+    }
+
+    fn end(self) -> ResultE<()> {
+        SerializeSeq::end(self)
+    }
+}
+
+impl<'a, W: Write + 'a> SerializeTuple for Compound<'a, W> {
+    type Ok = ();
+    type Error = Error;
+
+    fn serialize_element<T: ?Sized>(&mut self, value: &T) -> ResultE<()>
+        where T: Serialize
+    {
+        SerializeSeq::serialize_element(self, value)
     }
 
     fn end(self) -> ResultE<()> {

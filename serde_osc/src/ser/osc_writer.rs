@@ -39,6 +39,13 @@ pub trait OscWriter: Write {
     fn write_blob_tag(&mut self) -> ResultE<()> {
         Ok(self.write_u8(b'b')?)
     }
+    /// Write the OSC timetag, characterized by a (u32, u32) pair.
+    /// The first u32 is the seconds, second is fraction of seconds.
+    fn osc_write_timetag(&mut self, tag: (u32, u32)) -> ResultE<()> {
+        self.write_u32::<BigEndian>(tag.0)?;
+        self.write_u32::<BigEndian>(tag.1)?;
+        Ok(())
+    }
 }
 
 /// Provide OSC writing functions to all types implementing Write
