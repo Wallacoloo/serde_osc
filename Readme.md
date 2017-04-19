@@ -14,7 +14,8 @@ Refer to the examples under `examples/`. They can be run with (e.g.)
 $ cargo --run to_from_vec
 ```
 
-For more detailied usage (including OSC bundles), refer to the `tests/` directory.
+For more detailed usage (including using OSC bundles), refer to the `tests/`
+directory and the documentation (below).
 
 
 ## Documentation
