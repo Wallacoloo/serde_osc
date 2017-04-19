@@ -12,6 +12,7 @@ mod prim_deserializer;
 
 pub use self::pkt_deserializer::OwnedPktDeserializer as Deserializer;
 
+/// Deserialize an OSC packet from some readable device.
 pub fn from_read<D, R>(rd: R) -> ResultE<D>
     where R: Read, D: serde::de::Deserialize
 {
@@ -19,6 +20,8 @@ pub fn from_read<D, R>(rd: R) -> ResultE<D>
     D::deserialize(&mut de)
 }
 
+/// Deserialize an OSC packet from a `Vec<u8>` type.
+/// This is a wrapper around the `from_read` function.
 pub fn from_vec<T>(vec: &Vec<u8>) -> ResultE<T>
     where T: serde::de::Deserialize
 {

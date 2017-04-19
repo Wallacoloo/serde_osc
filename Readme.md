@@ -2,9 +2,8 @@
 
 Serialization and deserialization of Open Sound Control 1.0 packets represented using structs/tuples/anything supported by serde.
 
-Supports the 4 types specified in OSC 1.0: 'f', 'i', 's', 'b' corresponding to `f32`, `i32`, `String` and `Vec<u8>` ("blobs"), respectively.
-Note that blobs must be wrapped in Serde's ByteBuf type
-Also supports nesting of OSC bundles.
+Supports the 4 types specified in OSC 1.0: 'f', 'i', 's', 'b' corresponding to `f32`, `i32`, `String` and `Vec<u8>` ("blobs"), respectively, as well as nested OSC bundles.
+Note that blobs must be wrapped in Serde's ByteBuf type.
 
 
 ## Usage
@@ -15,16 +14,12 @@ Refer to the examples under `examples/`. They can be run with (e.g.)
 $ cargo --run to_from_vec
 ```
 
-For more detailied usage, refer to the `tests/` directory.
+For more detailied usage (including OSC bundles), refer to the `tests/` directory.
 
 
-## Development status
+## Documentation
 
- - [x] Deserialization of both OSC messages and bundles into any sequence type (structs, tuples, etc).
- - [x] Serialization of both OSC messages and bundles from any sequence type (structs, tuples, etc).
- - [ ] Examples and documentation.
-
-This library is under active development and may see some interface-breaking changes.
+Documentation can be found over on [docs.rs](https://docs.rs/serde_osc/)
 
 
 ## License

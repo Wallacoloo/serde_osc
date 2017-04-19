@@ -1,5 +1,6 @@
-/// Provide default implementations of serialize_xxx
-/// to implement the serde::ser::Serializer trait.
+//! Provide default implementations of serialize_xxx
+//! to implement the serde::ser::Serializer trait.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! default_ser_one {
     ($result:ident, $func:ident($($arg:ty),*)) => {
@@ -9,6 +10,7 @@ macro_rules! default_ser_one {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! default_ser_one_sized {
     ($func:ident($($arg:ty),*)) => {
@@ -18,6 +20,7 @@ macro_rules! default_ser_one_sized {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! default_ser_helper {
     (bool) => { default_ser_one!{Ok, serialize_bool(bool)} };
@@ -51,6 +54,7 @@ macro_rules! default_ser_helper {
     (struct_variant) => { default_ser_one!{SerializeStructVariant, serialize_struct_variant(&'static str, usize, &'static str, usize)} };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! default_ser {
     ($($func:ident)*) => {
