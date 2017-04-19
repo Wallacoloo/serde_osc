@@ -7,6 +7,51 @@ use error::{Error, ResultE};
 use super::osc_writer::OscWriter;
 use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 
+/// Serializes an entire OSC packet, which contains either one message or one
+/// bundle.
+///
+/// The data being serialized may be either a tuple, a struct (in which case
+/// each field is serialized in sequence, ignore the field names), or a Serde
+/// sequence.
+///
+/// If the packet is a message, then the first field of the object being serialized
+/// should be a `str`-type that represents the OSC address. Successive fields
+/// represent arguments. For example, the `message` instance below will serialize
+/// to a message addressed to "/audio/play" with a payload of `1i32` and `0.5f32`.
+///
+/// ```ignore
+/// extern crate serde_derive;
+/// #[derive(Serialize)]
+/// struct AudioPlayer {
+///     address: String,
+///     num_ch: i32,
+///     volume: f32,
+/// }
+/// let message = AudioPlayer{ address: "/audio/play".to_string(), num_ch: 1, volume: 0.5 };
+/// ```
+///
+/// To serialize a bundle, simply omit the address field, add a `(u32, u32)` field
+/// to transmit the [time-tag] associated with the bundle, and make sure all
+/// subsequent fields are themselves something that is serializable as a message.
+/// For example, an instance of the below `MyBundle` struct would serialize as a bundle.
+///
+/// ```ignore
+/// #[derive(Serialize)]
+/// struct MyBundle {
+///     time: (u32, u32),
+///     msg1: AudioPlayer,
+///     msg2: AudioPlayer,
+///     // ... And so on. Note that the messages don't need to be of homogeneous type;
+///     // msg1 could be AudioPlayer and msg2 some other Serialize-able type.
+///     // Additionally, this object would still be serialized as a bundle even
+///     // if it contained only one message.
+/// }
+/// ```
+///
+/// Note: the time-tag can also be `[u32; 2]`, a struct containing two `u32` members,
+/// or *anything* that serializes as a flat sequence of two `u32`s.
+///
+/// [time-tag]: http://opensoundcontrol.org/node/3/#timetags
 pub struct PktSerializer<W: Write> {
     output: W,
 }

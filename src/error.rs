@@ -6,13 +6,16 @@ use std::num;
 use std::string;
 use serde::{de, ser};
 
-/// Alias for a 'Result' with the error type 'serde_osc::de::Error'
+/// Alias for a `Result` with the error type [`serde_osc::error::Error`].
+///
+/// [`serde_osc::error::Error`]: enum.Error.html
 pub type ResultE<T> = Result<T, Error>;
 
 
+/// Unified error type used in both serialization and deserialization.
 #[derive(Debug)]
 pub enum Error {
-    /// User provided error message (via serde::de::Error::custom)
+    /// User provided error message (via `serde::de::Error::custom`)
     Message(String),
     /// Unknown argument type (i.e. not a 'f'=f32, 'i'=i32, etc)
     UnsupportedType,
@@ -22,7 +25,7 @@ pub enum Error {
     /// OSC expects all data to be aligned to 4 bytes lengths.
     /// Likely violators of this are strings, especially those at the end of a packet.
     BadPadding,
-    /// Error encountered due to std::io::Read
+    /// Error encountered due to `std::io::Read`
     Io(io::Error),
     /// Error converting between parsed type and what it represents.
     /// e.g. OSC spec uses i32 for lengths, which we cast to u64, but that could underflow.
@@ -33,21 +36,21 @@ pub enum Error {
 }
 
 
-/// Conversion from io::Error for use with the `?` operator
+/// Conversion from `io::Error` for use with the `?` operator
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self {
         Error::Io(e)
     }
 }
 
-/// Conversion from num::TryFromIntError for use with the `?` operator
+/// Conversion from `num::TryFromIntError` for use with the `?` operator
 impl From<num::TryFromIntError> for Error {
     fn from(e: num::TryFromIntError) -> Self {
         Error::BadCast(e)
     }
 }
 
-/// Conversion from string::FromUtf8Error for use with the `?` operator
+/// Conversion from `string::FromUtf8Error` for use with the `?` operator
 impl From<string::FromUtf8Error> for Error {
     fn from(e: string::FromUtf8Error) -> Self {
         Error::StrParseError(e)

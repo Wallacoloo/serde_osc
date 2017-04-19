@@ -8,9 +8,20 @@ use super::osc_reader::OscReader;
 use super::msg_visitor::MsgVisitor;
 use super::bundle_visitor::BundleVisitor;
 
-/// Deserializes an entire OSC packet, which may contain multiple messages.
-/// An OSC packet consists of an int32 indicating its length, followed by
+/// Deserializes an entire OSC packet.
+/// An OSC packet consists of an `i32` indicating its length, followed by
 /// the packet contents: EITHER a message OR a bundle.
+///
+/// This is designed to be symmetric with the [`serde_osc::ser::Serializer`] behavior,
+/// so note that no "#bundle" string is emitted when decoding bundles;
+/// bundles and messages are differentiated by the consumer based on whether the
+/// first emitted piece of data is a String (the address of the message) or a
+/// `(u32, u32)` sequence (the bundle time-tag).
+///
+/// See [`serde_osc::ser::Serializer`] for more info regarding valid
+/// deserialization targets.
+///
+/// [`serde_osc::ser::Serializer`]: ../ser/struct.Serializer.html
 pub struct OwnedPktDeserializer<R: Read> {
     reader: R,
 }
