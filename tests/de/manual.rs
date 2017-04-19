@@ -1,9 +1,9 @@
 use std::fmt;
 use std::io::Cursor;
-use serde::Deserializer;
+use serde::Deserializer as _Deserializer;
 use serde::bytes::ByteBuf;
 use serde::de::{SeqVisitor, Visitor};
-use serde_osc::de::PktDeserializer;
+use serde_osc::de::Deserializer;
 
 #[test]
 fn manual_de() {
@@ -43,7 +43,7 @@ fn manual_de() {
     };
     let rd = Cursor::new(&test_input[..]);
     let visitor = MyVisitor;
-    let mut test_de = PktDeserializer::new(rd);
+    let mut test_de = Deserializer::new(rd);
     let deserialized = test_de.deserialize(visitor).unwrap();
     assert_eq!(deserialized, expected);
 }

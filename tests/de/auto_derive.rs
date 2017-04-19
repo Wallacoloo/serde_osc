@@ -1,7 +1,7 @@
 use std::io::Cursor;
 use serde::Deserialize;
 use serde::bytes::ByteBuf;
-use serde_osc::de::PktDeserializer;
+use serde_osc::de::Deserializer;
 
 
 #[test]
@@ -25,7 +25,7 @@ fn auto_de() {
     let test_input = b"\x00\x00\x00\x2C/example/path\0\0\0,ifb\0\0\0\0\x01\x02\x03\x04\x43\xdc\0\0\0\0\0\x05\xde\xad\xbe\xef\xff\x00\x00\x00";
 
     let rd = Cursor::new(&test_input[..]);
-    let mut test_de = PktDeserializer::new(rd);
+    let mut test_de = Deserializer::new(rd);
     let deserialized = Deserialized::deserialize(&mut test_de).unwrap();
     assert_eq!(deserialized, expected);
 }

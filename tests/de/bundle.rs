@@ -1,6 +1,6 @@
 use std::io::Cursor;
 use serde::Deserialize;
-use serde_osc::de::PktDeserializer;
+use serde_osc::de::Deserializer;
 
 #[test]
 fn bundle() {
@@ -36,7 +36,7 @@ fn bundle() {
     let test_input = b"\x00\x00\x00\x30#bundle\0\x01\x02\x03\x04\x05\x06\x07\x08\x00\x00\x00\x0C/m1\0,i\0\0\x5E\xEE\xEE\xED\x00\x00\x00\x0C/m2\0,f\0\0\x43\xdc\x00\x00";
 
     let rd = Cursor::new(&test_input[..]);
-    let mut test_de = PktDeserializer::new(rd);
+    let mut test_de = Deserializer::new(rd);
     let deserialized = Bundle::deserialize(&mut test_de).unwrap();
     assert_eq!(deserialized, expected);
 }
