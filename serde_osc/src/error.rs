@@ -58,7 +58,7 @@ impl From<string::FromUtf8Error> for Error {
 impl Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Message(ref msg) => write!(f, "Deserializer Error: {}", msg),
+            Error::Message(ref msg) => write!(f, "serde_osc error: {}", msg),
             Error::UnsupportedType => write!(f, "Unsupported OSC type"),
             Error::BadFormat => write!(f, "Bad OSC packet format"),
             Error::BadPadding => write!(f, "OSC data not padded to 4-byte boundary"),
