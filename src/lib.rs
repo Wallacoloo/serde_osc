@@ -7,9 +7,7 @@
 //! It mixes human-readable API endpoints (termed "addresses") with binary-encoded
 //! arguments and headers. An example OSC message is
 //!
-//! ```ignore
-//! b"\0\0\0\x24/audio/play\0,ifb\0\0\0\0\0\0\0\x01x71\x44\x68\x00\0\0\0\x04\xDE\xAD\xBE\xEF"
-//! ```
+//!     b"\0\0\0\x24/audio/play\0,ifb\0\0\0\0\0\0\0\x01x71\x44\x68\x00\0\0\0\x04\xDE\xAD\xBE\xEF"
 //!
 //! In this example, the first 4 bytes signify the length of the message;
 //! the null-terminated string "/audio/play" signifies the endpoint (which
@@ -36,7 +34,7 @@
 //! [`serde_osc::from_vec`]: de/fn.from_vec.html
 //! [http://opensoundcontrol.org/spec-1_0]: http://opensoundcontrol.org/spec-1_0
 //!
-//! ## Example
+//! # Examples
 //!
 //! The following example serializes a struct into a `Vec<u8>`, formatted as an
 //! OSC packet, and then deserializes the OSC packet back into the struct.
@@ -52,12 +50,15 @@
 //!
 //! /// Struct we'll serialize.
 //! /// This represents a single OSC message with three arguments:
-//! ///   one of type 'i', 'f' and 'b', sent in the order they appear in the struct.
+//! ///   one of type 'i', 'f' and 'b', encoded in the order they appear in the struct.
 //! #[derive(Debug, Deserialize, Serialize)]
 //! struct Message {
 //!     address: String,
 //!     num_channels: i32,
 //!     rate: f32,
+//!     // ByteBuf is the object we use for OSC "blobs".
+//!     // It's a thin wrapper over Vec<u8> provided by Serde that allows
+//!     // for more computationally-efficient serialization/deserialization.
 //!     content: ByteBuf,
 //! }
 //!
@@ -69,8 +70,12 @@
 //!         content: ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef])
 //!     };
 //!     println!("Serializing {:?}", message);
+//!
+//!     // Serialize the message to an OSC packet stored in a Vec<u8>
 //!     let as_vec = ser::to_vec(&message).unwrap();
 //!     println!("Serialied to: {:?}", as_vec);
+//!
+//!     // Deserialize an OSC packet contained in a Vec<u8> into the Message struct
 //!     let received: Message = de::from_vec(&as_vec).unwrap();
 //!     println!("Received: {:?}", received);
 //! }

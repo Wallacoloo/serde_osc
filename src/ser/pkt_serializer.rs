@@ -20,16 +20,18 @@ use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 /// to a message addressed to "/audio/play" with a payload of `4i32` and `0.5f32`.
 ///
 /// ```
+/// #[macro_use]
 /// extern crate serde_derive;
+///
 /// #[derive(Serialize)]
 /// struct AudioPlayer {
 ///     address: String,
 ///     device_id: i32,
 ///     volume: f32,
 /// }
-/// fn main() {
-///     let message = AudioPlayer{ address: "/audio/play".to_string(), device_id: 4, volume: 0.5 };
-/// }
+///# fn main() {
+/// let message = AudioPlayer{ address: "/audio/play".to_string(), device_id: 4, volume: 0.5 };
+///# }
 /// ```
 ///
 /// To serialize a bundle, simply omit the address field, add a `(u32, u32)` field
@@ -37,7 +39,10 @@ use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 /// subsequent fields are themselves something that is serializable as a message.
 /// For example, an instance of the below `MyBundle` struct would serialize as a bundle.
 ///
-/// ```ignore
+/// ```
+///# #[macro_use]
+///# extern crate serde_derive;
+///#
 /// #[derive(Serialize)]
 /// struct MyBundle {
 ///     time: (u32, u32),
