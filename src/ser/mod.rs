@@ -12,13 +12,17 @@ mod timetag_ser;
 
 pub use self::pkt_serializer::PktSerializer as Serializer;
 
+pub fn to_write<S: ?Sized, W: Write>(write: &mut W, value: &S) -> ResultE<()>
+    where W: Write, S: serde::ser::Serialize
+{
+    let mut ser = Serializer::new(write.by_ref());
+    value.serialize(&mut ser)
+}
+
 pub fn to_vec<T: ?Sized>(value: &T) -> ResultE<Vec<u8>>
     where T: serde::ser::Serialize
 {
     let mut output = Cursor::new(Vec::new());
-    {
-        let mut ser = Serializer::new(output.by_ref());
-        let _result = value.serialize(&mut ser)?;
-    }
+    to_write(&mut output, value)?;
     Ok(output.into_inner())
 }
