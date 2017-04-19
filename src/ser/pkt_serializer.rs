@@ -17,17 +17,19 @@ use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 /// If the packet is a message, then the first field of the object being serialized
 /// should be a `str`-type that represents the OSC address. Successive fields
 /// represent arguments. For example, the `message` instance below will serialize
-/// to a message addressed to "/audio/play" with a payload of `1i32` and `0.5f32`.
+/// to a message addressed to "/audio/play" with a payload of `4i32` and `0.5f32`.
 ///
-/// ```ignore
+/// ```
 /// extern crate serde_derive;
 /// #[derive(Serialize)]
 /// struct AudioPlayer {
 ///     address: String,
-///     num_ch: i32,
+///     device_id: i32,
 ///     volume: f32,
 /// }
-/// let message = AudioPlayer{ address: "/audio/play".to_string(), num_ch: 1, volume: 0.5 };
+/// fn main() {
+///     let message = AudioPlayer{ address: "/audio/play".to_string(), device_id: 4, volume: 0.5 };
+/// }
 /// ```
 ///
 /// To serialize a bundle, simply omit the address field, add a `(u32, u32)` field
