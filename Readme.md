@@ -4,8 +4,17 @@ Supports the 4 types specified in OSC 1.0: 'f', 'i', 's', 'b' corresponding to `
 Note that blobs must be wrapped in Serde's ByteBuf type
 Also supports nesting of OSC bundles.
 
-For usage, refer to the `tests` directory inside `serde_osc`.
-Examples will be published once the library is more stable/fully developed.
+
+Usage
+-----
+
+Refer to the examples under `examples/`. They can be run with (e.g.)
+
+```sh
+$ cargo --run to_from_vec
+```
+
+For more detailied usage, refer to the `tests` directory.
 
 Development status
 ------------------

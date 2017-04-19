@@ -1,7 +1,7 @@
 use std::io::{Cursor, Write};
 use serde::Serialize;
 use serde::bytes::ByteBuf;
-use serde_osc::ser::PktSerializer;
+use serde_osc::ser::Serializer;
 
 
 #[test]
@@ -26,7 +26,7 @@ fn auto_ser() {
     let mut output = Cursor::new(Vec::new());
 
     {
-        let mut test_de = PktSerializer::new(output.by_ref());
+        let mut test_de = Serializer::new(output.by_ref());
         let _result = test_input.serialize(&mut test_de).unwrap();
     }
     assert_eq!(output.into_inner(), expected);
