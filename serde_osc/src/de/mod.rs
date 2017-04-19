@@ -1,7 +1,6 @@
 /// Deserialization
 
 mod bundle_visitor;
-mod error;
 mod iter_visitor;
 mod maybe_skip_comma;
 mod msg_visitor;

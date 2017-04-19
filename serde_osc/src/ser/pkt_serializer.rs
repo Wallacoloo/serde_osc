@@ -3,7 +3,7 @@ use std::io::{Cursor, Write};
 use byteorder::WriteBytesExt;
 use serde::ser::{Impossible, Serialize, Serializer, SerializeSeq, SerializeStruct, SerializeTuple};
 
-use super::error::{Error, ResultE};
+use error::{Error, ResultE};
 use super::osc_writer::OscWriter;
 use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 

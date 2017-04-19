@@ -9,5 +9,6 @@ pub trait NumFields {
     fn num_fields() -> usize;
 }
 
+pub mod error;
 pub mod de;
 pub mod ser;

@@ -4,7 +4,7 @@ use std::vec;
 use serde::de;
 use serde::de::{DeserializeSeed, SeqVisitor, Visitor};
 
-use super::error::{Error, ResultE};
+use error::{Error, ResultE};
 use super::osc_reader::OscReader;
 use super::maybe_skip_comma::MaybeSkipComma;
 
@@ -98,7 +98,7 @@ impl<'a, R> MsgVisitor<'a, R>
             b'f' => self.read.parse_f32().map(|f| { OscType::F32(f) }),
             b's' => self.read.parse_str().map(|s| { OscType::String(s) }),
             b'b' => self.read.parse_blob().map(|b| { OscType::Blob(b) }),
-            c => Err(Error::UnknownType(c)),
+            _ => Err(Error::UnsupportedType),
         }
     }
 }

@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 use serde::ser::{Impossible, Serialize, Serializer};
 
-use super::error::{Error, ResultE};
+use error::{Error, ResultE};
 
 pub struct TimetagSer {
     n_parsed: u8,

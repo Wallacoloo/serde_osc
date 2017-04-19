@@ -3,7 +3,7 @@ use std::mem;
 use serde::de;
 use serde::de::{DeserializeSeed, SeqVisitor, Visitor};
 
-use super::error::{Error, ResultE};
+use error::{Error, ResultE};
 use super::iter_visitor::IterVisitor;
 use super::osc_reader::OscReader;
 use super::pkt_deserializer::PktDeserializer;

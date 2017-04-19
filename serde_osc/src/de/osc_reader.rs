@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use std::io::Read;
 use byteorder::{BigEndian, ReadBytesExt};
 
-use super::error::{Error, ResultE};
+use error::{Error, ResultE};
 
 /// auto-implemented trait to parse OSC data from a Read object.
 pub trait OscReader: Read {

@@ -1,6 +1,6 @@
 use serde::de::{Deserializer, DeserializeSeed, SeqVisitor};
 
-use super::error::{Error, ResultE};
+use error::{Error, ResultE};
 
 /// If we want to deserialize an entire sequence simultaneously,
 /// e.g. reading (u32, u32) from the bitstream atomically,

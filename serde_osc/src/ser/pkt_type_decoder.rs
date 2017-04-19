@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use std::io::Cursor;
 use serde::ser::{Impossible, Serialize, Serializer, SerializeSeq, SerializeStruct, SerializeTuple};
 
-use super::error::{Error, ResultE};
+use error::{Error, ResultE};
 use super::osc_writer::OscWriter;
 use super::timetag_ser::TimetagSer;
 

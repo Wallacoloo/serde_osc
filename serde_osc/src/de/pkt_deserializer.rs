@@ -3,7 +3,7 @@ use byteorder::{BigEndian, ReadBytesExt};
 use serde::de;
 use serde::de::Visitor;
 
-use super::error::{Error, ResultE};
+use error::{Error, ResultE};
 use super::osc_reader::OscReader;
 use super::msg_visitor::MsgVisitor;
 use super::bundle_visitor::BundleVisitor;

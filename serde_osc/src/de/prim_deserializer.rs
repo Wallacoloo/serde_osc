@@ -1,6 +1,6 @@
 use serde::de::{Deserializer, Visitor};
 
-use super::error::{Error, ResultE};
+use error::{Error, ResultE};
 
 /// Serde gymnastics.
 /// Implements the Deserializer trait for primitive types.

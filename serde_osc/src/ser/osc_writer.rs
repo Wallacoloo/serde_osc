@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use std::io::Write;
 use byteorder::{BigEndian, WriteBytesExt};
 
-use super::error::ResultE;
+use error::ResultE;
 
 /// auto-implemented trait to write OSC data to a Write object.
 pub trait OscWriter: Write {
