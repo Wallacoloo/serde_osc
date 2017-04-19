@@ -1,11 +1,18 @@
 [package]
 name = "serde_osc"
+description = "Serialization and deserialization of Open Sound Control (OSC) packets using serde"
 version = "0.1.0"
 authors = ["Colin Wallace <wallacoloo@gmail.com>"]
 
+repository = "https://github.io/Wallacoloo/serde_osc"
+readme = "Readme.md"
+keywords = ["OSC", "Open Sound Control", "Serialization", "Deserialization", "serde"]
+categories = ["encoding"]
+license = "MIT/Apache-2.0"
+
 [dependencies]
-byteorder = "*"
-serde = "*"
+byteorder = "1.0"
+serde = "0.9"
 
 [dev-dependencies]
-serde_derive = "*"
+serde_derive = "0.9"
