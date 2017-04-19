@@ -5,6 +5,7 @@ version = "0.1.1"
 authors = ["Colin Wallace <wallacoloo@gmail.com>"]
 
 repository = "https://github.com/Wallacoloo/serde_osc"
+documentation = "https://docs.rs/serde_osc/"
 readme = "Readme.md"
 keywords = ["OSC", "audio", "serialization", "deserialization", "serde"]
 categories = ["encoding"]
