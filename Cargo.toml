@@ -6,7 +6,7 @@ authors = ["Colin Wallace <wallacoloo@gmail.com>"]
 
 repository = "https://github.io/Wallacoloo/serde_osc"
 readme = "Readme.md"
-keywords = ["OSC", "Open Sound Control", "Serialization", "Deserialization", "serde"]
+keywords = ["OSC", "audio", "serialization", "deserialization", "serde"]
 categories = ["encoding"]
 license = "MIT/Apache-2.0"
 
