@@ -22,21 +22,21 @@ pub struct PktContents<'a, W: Write + 'a> {
     state: State,
 }
 
-pub enum State {
+enum State {
     UnknownType,
     Msg(MsgSerializer),
     Bundle(BundleSerializer),
 }
 
 /// Once we know we're serializing a message, we do so through this struct.
-pub struct MsgSerializer {
+struct MsgSerializer {
     /// Address + typetag, merged into one field
     addr_typetag: Cursor<Vec<u8>>,
     /// Binary-formatted argument data
     args: Cursor<Vec<u8>>,
 }
 
-pub struct BundleSerializer {
+struct BundleSerializer {
     contents: Cursor<Vec<u8>>,
 }
 
