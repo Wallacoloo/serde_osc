@@ -119,13 +119,6 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
     {
         Ok(PktContents{ output: self, state: State::UnknownType })
     }
-    fn serialize_seq_fixed_size(
-        self, 
-        size: usize
-    ) -> ResultE<Self::SerializeSeq>
-    {
-        self.serialize_seq(Some(size))
-    }
     fn serialize_tuple(
         self, 
         size: usize
@@ -173,7 +166,7 @@ impl<'a> Serializer for &'a mut MsgSerializer {
     }
     default_ser!{bool i8 i16 i64 u8 u16 u32 u64 f64 char
         none some unit unit_struct unit_variant newtype_struct newtype_variant
-        seq seq_fixed_size tuple tuple_struct tuple_variant map struct struct_variant}
+        seq tuple tuple_struct tuple_variant map struct struct_variant}
 }
 
 

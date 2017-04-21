@@ -58,13 +58,6 @@ impl<'a> Serializer for &'a mut PktTypeDecoder {
     {
         Ok(TimetagSeqSer{ output: self, ser: TimetagSer::new() })
     }
-    fn serialize_seq_fixed_size(
-        self, 
-        size: usize
-    ) -> ResultE<Self::SerializeSeq>
-    {
-        self.serialize_seq(Some(size))
-    }
     fn serialize_tuple(
         self, 
         size: usize

@@ -40,22 +40,22 @@ impl<R> OwnedPktDeserializer<R>
     }
 }
 
-impl<'a, R> de::Deserializer for &'a mut OwnedPktDeserializer<R>
+impl<'de, 'a, R> de::Deserializer<'de> for &'a mut OwnedPktDeserializer<R>
     where R: Read
 {
     type Error = Error;
-    fn deserialize<V>(self, visitor: V) -> ResultE<V::Value>
-        where V: Visitor
+    fn deserialize_any<V>(self, visitor: V) -> ResultE<V::Value>
+        where V: Visitor<'de>
     {
-        PktDeserializer::new(&mut self.reader).deserialize(visitor)
+        PktDeserializer::new(&mut self.reader).deserialize_any(visitor)
     }
 
     // OSC messages are strongly typed, so we don't make use of any type hints.
     // More info: https://github.com/serde-rs/serde/blob/b7d6c5d9f7b3085a4d40a446eeb95976d2337e07/serde/src/macros.rs#L106
-    forward_to_deserialize! {
+    forward_to_deserialize_any! {
         bool u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 char str string unit option
-        seq seq_fixed_size bytes byte_buf map unit_struct newtype_struct
-        tuple_struct struct struct_field tuple enum ignored_any
+        seq bytes byte_buf map unit_struct newtype_struct
+        tuple_struct struct identifier tuple enum ignored_any
     }
 }
 
@@ -67,12 +67,12 @@ impl<'a, R> PktDeserializer<'a, R>
     }
 }
 
-impl<'a, R> de::Deserializer for &'a mut PktDeserializer<'a, R>
+impl<'de, 'a, R> de::Deserializer<'de> for &'a mut PktDeserializer<'a, R>
     where R: Read + 'a
 {
     type Error = Error;
-    fn deserialize<V>(self, visitor: V) -> ResultE<V::Value>
-        where V: Visitor
+    fn deserialize_any<V>(self, visitor: V) -> ResultE<V::Value>
+        where V: Visitor<'de>
     {
         // First, extract the length of the packet.
         let length = self.reader.read_i32::<BigEndian>()?;
@@ -96,9 +96,9 @@ impl<'a, R> de::Deserializer for &'a mut PktDeserializer<'a, R>
 
     // This struct only deserializes sequences; ignore all type hints.
     // More info: https://github.com/serde-rs/serde/blob/b7d6c5d9f7b3085a4d40a446eeb95976d2337e07/serde/src/macros.rs#L106
-    forward_to_deserialize! {
+    forward_to_deserialize_any! {
         bool u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 char str string unit option
-        seq seq_fixed_size bytes byte_buf map unit_struct newtype_struct
-        tuple_struct struct struct_field tuple enum ignored_any
+        seq bytes byte_buf map unit_struct newtype_struct
+        tuple_struct struct identifier tuple enum ignored_any
     }
 }

@@ -1,9 +1,10 @@
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
+extern crate serde_bytes;
 extern crate serde_osc;
 
-use serde::bytes::ByteBuf;
+use serde_bytes::ByteBuf;
 use serde_osc::{de, ser};
 
 /// Struct we'll serialize.

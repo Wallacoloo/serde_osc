@@ -1,8 +1,8 @@
 use std::fmt;
 use std::io::Cursor;
 use serde::Deserializer as _Deserializer;
-use serde::bytes::ByteBuf;
-use serde::de::{SeqVisitor, Visitor};
+use serde_bytes::ByteBuf;
+use serde::de::{SeqAccess, Visitor};
 use serde_osc::de::Deserializer;
 
 #[test]
@@ -16,20 +16,20 @@ fn manual_de() {
         arg_2: ByteBuf,
     }
     struct MyVisitor;
-    impl Visitor for MyVisitor {
+    impl<'de> Visitor<'de> for MyVisitor {
         type Value = Deserialized;
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             write!(formatter, "An OSC path followed by two integer arguments")
         }
         fn visit_seq<V>(self, mut visitor: V) -> Result<Self::Value, V::Error>
-            where V: SeqVisitor
+            where V: SeqAccess<'de>
         {
-            let address = visitor.visit()?.unwrap();
-            let arg_0 = visitor.visit()?.unwrap();
-            let arg_1 = visitor.visit()?.unwrap();
-            let arg_2 = visitor.visit()?.unwrap();
+            let address = visitor.next_element()?.unwrap();
+            let arg_0 = visitor.next_element()?.unwrap();
+            let arg_1 = visitor.next_element()?.unwrap();
+            let arg_2 = visitor.next_element()?.unwrap();
             // Assert end of packet.
-            assert!(visitor.visit::<()>()? == None);
+            assert!(visitor.next_element::<()>()? == None);
             Ok(Deserialized{ address, arg_0, arg_1, arg_2 })
         }
     }
@@ -44,7 +44,7 @@ fn manual_de() {
     let rd = Cursor::new(&test_input[..]);
     let visitor = MyVisitor;
     let mut test_de = Deserializer::new(rd);
-    let deserialized = test_de.deserialize(visitor).unwrap();
+    let deserialized = test_de.deserialize_any(visitor).unwrap();
     assert_eq!(deserialized, expected);
 }
 

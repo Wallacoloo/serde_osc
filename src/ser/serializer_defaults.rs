@@ -41,17 +41,16 @@ macro_rules! default_ser_helper {
     (some) => { default_ser_one_sized!{serialize_some(&T)} };
     (unit) => { default_ser_one!{Ok, serialize_unit()} };
     (unit_struct) => { default_ser_one!{Ok, serialize_unit_struct(&'static str)} };
-    (unit_variant) => { default_ser_one!{Ok, serialize_unit_variant(&'static str, usize, &'static str)} };
+    (unit_variant) => { default_ser_one!{Ok, serialize_unit_variant(&'static str, u32, &'static str)} };
     (newtype_struct) => { default_ser_one_sized!{serialize_newtype_struct(&'static str, &T)} };
-    (newtype_variant) => { default_ser_one_sized!{serialize_newtype_variant(&'static str, usize, &'static str, &T)} };
+    (newtype_variant) => { default_ser_one_sized!{serialize_newtype_variant(&'static str, u32, &'static str, &T)} };
     (seq) => { default_ser_one!{SerializeSeq, serialize_seq(Option<usize>)} };
-    (seq_fixed_size) => { default_ser_one!{SerializeSeq, serialize_seq_fixed_size(usize)} };
     (tuple) => { default_ser_one!{SerializeTuple, serialize_tuple(usize)} };
     (tuple_struct) => { default_ser_one!{SerializeTupleStruct, serialize_tuple_struct(&'static str, usize)} };
-    (tuple_variant) => { default_ser_one!{SerializeTupleVariant, serialize_tuple_variant(&'static str, usize, &'static str, usize)} };
+    (tuple_variant) => { default_ser_one!{SerializeTupleVariant, serialize_tuple_variant(&'static str, u32, &'static str, usize)} };
     (map) => { default_ser_one!{SerializeMap, serialize_map(Option<usize>)} };
     (struct) => { default_ser_one!{SerializeStruct, serialize_struct(&'static str, usize)} };
-    (struct_variant) => { default_ser_one!{SerializeStructVariant, serialize_struct_variant(&'static str, usize, &'static str, usize)} };
+    (struct_variant) => { default_ser_one!{SerializeStructVariant, serialize_struct_variant(&'static str, u32, &'static str, usize)} };
 }
 
 #[doc(hidden)]

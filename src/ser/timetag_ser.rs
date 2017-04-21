@@ -53,5 +53,5 @@ impl<'a> Serializer for &'a mut TimetagSer {
 
     default_ser!{bool i8 i16 i32 i64 u8 u16 u64 f32 f64 char
         str bytes none some unit unit_struct unit_variant newtype_struct newtype_variant
-        seq seq_fixed_size tuple tuple_struct tuple_variant map struct struct_variant}
+        seq tuple tuple_struct tuple_variant map struct struct_variant}
 }

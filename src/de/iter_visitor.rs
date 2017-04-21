@@ -1,4 +1,4 @@
-use serde::de::{Deserializer, DeserializeSeed, SeqVisitor};
+use serde::de::{Deserializer, DeserializeSeed, SeqAccess};
 
 use error::{Error, ResultE};
 
@@ -15,12 +15,12 @@ use error::{Error, ResultE};
 pub struct IterVisitor<I>(pub I);
 
 
-impl<I> SeqVisitor for IterVisitor<I>
-    where I: Iterator, I::Item : Deserializer<Error=Error>
+impl<'de, I> SeqAccess<'de> for IterVisitor<I>
+    where I: Iterator, I::Item : Deserializer<'de, Error=Error>
 {
     type Error = Error;
-    fn visit_seed<T>(&mut self, seed: T) -> ResultE<Option<T::Value>>
-        where T: DeserializeSeed
+    fn next_element_seed<T>(&mut self, seed: T) -> ResultE<Option<T::Value>>
+        where T: DeserializeSeed<'de>
     {
         match self.0.next() {
             // End of sequence

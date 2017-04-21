@@ -1,7 +1,7 @@
 use std::io::{Read, Take};
 use std::mem;
 use serde::de;
-use serde::de::{DeserializeSeed, SeqVisitor, Visitor};
+use serde::de::{DeserializeSeed, SeqAccess, Visitor};
 
 use error::{Error, ResultE};
 use super::iter_visitor::IterVisitor;
@@ -42,39 +42,39 @@ impl<'a, R> BundleVisitor<'a, R>
 
 
 
-impl<'a, R> de::Deserializer for BundleElement<'a, R>
+impl<'de, 'a, R> de::Deserializer<'de> for BundleElement<'a, R>
     where R: Read + 'a
 {
     type Error = Error;
     // deserializes a single item from the message, consuming self.
-    fn deserialize<V>(self, visitor: V) -> ResultE<V::Value>
+    fn deserialize_any<V>(self, visitor: V) -> ResultE<V::Value>
     where
-        V: Visitor
+        V: Visitor<'de>
     {
         match self {
             BundleElement::TimeTag((sec, frac)) =>
                 visitor.visit_seq(IterVisitor([sec, frac].into_iter().cloned()
                     .map(PrimDeserializer))),
-            BundleElement::Packet(mut pkt) => pkt.deserialize(visitor),
+            BundleElement::Packet(mut pkt) => pkt.deserialize_any(visitor),
         }
     }
 
     // OSC messages are strongly typed, so we don't make use of any type hints.
     // More info: https://github.com/serde-rs/serde/blob/b7d6c5d9f7b3085a4d40a446eeb95976d2337e07/serde/src/macros.rs#L106
-    forward_to_deserialize! {
+    forward_to_deserialize_any! {
         bool u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 char str string unit option
-        seq seq_fixed_size bytes byte_buf map unit_struct newtype_struct
-        tuple_struct struct struct_field tuple enum ignored_any
+        seq bytes byte_buf map unit_struct newtype_struct
+        tuple_struct struct identifier tuple enum ignored_any
     }
 }
 
 
-impl<'a, R> SeqVisitor for BundleVisitor<'a, R>
+impl<'de, 'a, R> SeqAccess<'de> for BundleVisitor<'a, R>
     where R: Read + 'a
 {
     type Error = Error;
-    fn visit_seed<T>(&mut self, seed: T) -> ResultE<Option<T::Value>>
-        where T: DeserializeSeed
+    fn next_element_seed<T>(&mut self, seed: T) -> ResultE<Option<T::Value>>
+        where T: DeserializeSeed<'de>
     {
         if self.read.limit() == 0 {
             // end of bundle

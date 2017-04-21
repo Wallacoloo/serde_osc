@@ -1,6 +1,6 @@
 use std::io::Cursor;
 use serde::Deserialize;
-use serde::bytes::ByteBuf;
+use serde_bytes::ByteBuf;
 use serde_osc::de::Deserializer;
 
 

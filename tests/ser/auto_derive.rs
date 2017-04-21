@@ -1,6 +1,6 @@
 use std::io::{Cursor, Write};
 use serde::Serialize;
-use serde::bytes::ByteBuf;
+use serde_bytes::ByteBuf;
 use serde_osc::ser::Serializer;
 
 
