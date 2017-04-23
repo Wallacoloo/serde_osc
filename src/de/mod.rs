@@ -7,6 +7,7 @@ mod iter_visitor;
 mod maybe_skip_comma;
 mod msg_visitor;
 mod osc_reader;
+mod osc_type;
 mod pkt_deserializer;
 mod prim_deserializer;
 
