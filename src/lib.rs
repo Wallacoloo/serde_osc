@@ -77,7 +77,7 @@
 //!     println!("Serialied to: {:?}", as_vec);
 //!
 //!     // Deserialize an OSC packet contained in a Vec<u8> into the Message struct
-//!     let received: Message = de::from_vec(&as_vec).unwrap();
+//!     let received: Message = de::from_slice(&as_vec).unwrap();
 //!     println!("Received: {:?}", received);
 //! }
 //! ```
@@ -96,5 +96,5 @@ pub mod de;
 /// OSC packet serialization framework.
 pub mod ser;
 
-pub use de::{from_read, from_vec};
+pub use de::{from_read, from_slice};
 pub use ser::{to_write, to_vec};

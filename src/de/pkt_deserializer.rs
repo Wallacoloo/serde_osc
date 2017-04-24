@@ -8,7 +8,7 @@ use super::osc_reader::OscReader;
 use super::msg_visitor::MsgVisitor;
 use super::bundle_visitor::BundleVisitor;
 
-/// Deserializes an entire OSC packet.
+/// Deserializes an entire OSC packet or bundle element (they are syntactically identical).
 /// An OSC packet consists of an `i32` indicating its length, followed by
 /// the packet contents: EITHER a message OR a bundle.
 ///
@@ -22,41 +22,8 @@ use super::bundle_visitor::BundleVisitor;
 /// deserialization targets.
 ///
 /// [`serde_osc::ser::Serializer`]: ../ser/struct.Serializer.html
-pub struct OwnedPktDeserializer<R: Read> {
-    reader: R,
-}
-
-/// Used to deserialize an OSC bundle element, which is syntactically
-/// identical to an OSC packet.
 pub struct PktDeserializer<'a, R: Read + 'a> {
     reader: &'a mut R,
-}
-
-impl<R> OwnedPktDeserializer<R>
-    where R: Read
-{
-    pub fn new(reader: R) -> Self {
-        Self{ reader }
-    }
-}
-
-impl<'de, 'a, R> de::Deserializer<'de> for &'a mut OwnedPktDeserializer<R>
-    where R: Read
-{
-    type Error = Error;
-    fn deserialize_any<V>(self, visitor: V) -> ResultE<V::Value>
-        where V: Visitor<'de>
-    {
-        PktDeserializer::new(&mut self.reader).deserialize_any(visitor)
-    }
-
-    // OSC messages are strongly typed, so we don't make use of any type hints.
-    // More info: https://github.com/serde-rs/serde/blob/b7d6c5d9f7b3085a4d40a446eeb95976d2337e07/serde/src/macros.rs#L106
-    forward_to_deserialize_any! {
-        bool u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 char str string unit option
-        seq bytes byte_buf map unit_struct newtype_struct
-        tuple_struct struct identifier tuple enum ignored_any
-    }
 }
 
 impl<'a, R> PktDeserializer<'a, R>

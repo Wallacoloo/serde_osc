@@ -35,7 +35,7 @@ fn main() {
     println!("Serialied to: {:?}", as_vec);
 
     // Deserialize an OSC packet contained in a Vec<u8> into the Message struct
-    let received: Message = de::from_vec(&as_vec).unwrap();
+    let received: Message = de::from_slice(&as_vec).unwrap();
     println!("Received: {:?}", received);
 }
 

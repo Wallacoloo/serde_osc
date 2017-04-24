@@ -38,9 +38,9 @@ fn manual_de() {
             ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef, 0xff]),
         ),
     };
-    let rd = Cursor::new(&test_input[..]);
+    let mut rd = Cursor::new(&test_input[..]);
     let visitor = MyVisitor;
-    let mut test_de = Deserializer::new(rd);
+    let mut test_de = Deserializer::new(&mut rd);
     let deserialized = test_de.deserialize_any(visitor).unwrap();
     assert_eq!(deserialized, expected);
 }
