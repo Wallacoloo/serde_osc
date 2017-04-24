@@ -1,7 +1,7 @@
 [package]
 name = "serde_osc"
 description = "Serialization and deserialization of Open Sound Control (OSC) packets using serde"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Colin Wallace <wallacoloo@gmail.com>"]
 
 repository = "https://github.com/Wallacoloo/serde_osc"
