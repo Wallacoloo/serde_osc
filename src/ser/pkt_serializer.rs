@@ -1,10 +1,9 @@
-use std::convert::TryInto;
-use std::io::{Cursor, Write};
+use std::io::Write;
 use serde::ser::{Impossible, Serialize, Serializer, SerializeSeq, SerializeStruct, SerializeTuple};
 
 use error::{Error, ResultE};
+use super::bundle_serializer::BundleSerializer;
 use super::msg_serializer::MsgSerializer;
-use super::osc_writer::OscWriter;
 use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 
 /// Serializes an entire OSC packet, which contains either one message or one
@@ -80,10 +79,6 @@ enum State {
 }
 
 
-struct BundleSerializer {
-    contents: Cursor<Vec<u8>>,
-}
-
 impl<W: Write> PktSerializer<W> {
     pub fn new(output: W) -> Self {
         Self{ output }
@@ -156,9 +151,9 @@ impl<'a, W: Write + 'a> SerializeSeq for PktContents<'a, W> {
                         Ok(())
                     },
                     PktType::Bundle => {
-                        self.state = State::Bundle(BundleSerializer{
-                            contents: decoder.data(),
-                        });
+                        self.state = State::Bundle(BundleSerializer::new(
+                            decoder.data()
+                        ));
                         Ok(())
                     },
                 }
@@ -167,9 +162,7 @@ impl<'a, W: Write + 'a> SerializeSeq for PktContents<'a, W> {
                 value.serialize(msg)
             },
             State::Bundle(ref mut bundle) => {
-                // each bundle element is itself a packet.
-                let mut ser = PktSerializer{ output: bundle.contents.by_ref() };
-                value.serialize(&mut ser)
+                value.serialize(bundle)
             },
         }
     }
@@ -184,19 +177,7 @@ impl<'a, W: Write + 'a> SerializeSeq for PktContents<'a, W> {
             },
             // Write the bundle header & data to the output
             State::Bundle(bundle) => {
-                let payload = bundle.contents.into_inner();
-                // Add 8 because we have yet to write the #bundle address
-                let payload_size = 8 + payload.len();
-                if payload_size % 4 != 0 {
-                    // Sanity check; OSC requires packets to be a multiple of 4 bytes.
-                    return Err(Error::BadFormat);
-                }
-                // Write the packet length
-                let output = &mut self.output.output;
-                output.osc_write_i32(payload_size.try_into()?)?;
-                // Write the packet payload
-                output.osc_write_str("#bundle")?;
-                Ok(output.write_all(&payload)?)
+                Ok(bundle.write_into(&mut self.output.output)?)
             }
         }
     }
