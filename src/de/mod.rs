@@ -25,6 +25,7 @@ pub fn from_read<'de, D, R>(mut rd: R) -> ResultE<D>
 
 /// Deserialize an OSC packet from a `&[u8]` type.
 /// This is a wrapper around the `from_read` function.
+/// Pairs nicely with ser::to_vec, as Vec<u8> is coercable to &[u8].
 pub fn from_slice<'de, T>(slice: &[u8]) -> ResultE<T>
     where T: serde::de::Deserialize<'de>
 {
