@@ -13,20 +13,20 @@ use serde_osc::{de, ser};
 #[derive(Debug, Deserialize, Serialize)]
 struct Message {
     address: String,
-    num_channels: i32,
-    rate: f32,
     // ByteBuf is the object we use for OSC "blobs".
     // It's a thin wrapper over Vec<u8> provided by Serde that allows
     // for more computationally-efficient serialization/deserialization.
-    content: ByteBuf,
+    args: (i32, f32, ByteBuf),
 }
 
 fn main() {
     let message = Message {
         address: "/audio/play".to_owned(),
-        num_channels: 1,
-        rate: 44100.0f32,
-        content: ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef])
+        args: (
+            1,
+            44100.0f32,
+            ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef]),
+        )
     };
     println!("Serializing {:?}", message);
 
@@ -38,3 +38,4 @@ fn main() {
     let received: Message = de::from_vec(&as_vec).unwrap();
     println!("Received: {:?}", received);
 }
+
