@@ -15,8 +15,8 @@ use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 /// sequence.
 ///
 /// If the packet is a message, then the first field of the object being serialized
-/// should be a `str`-type that represents the OSC address. Successive fields
-/// represent arguments. For example, the `message` instance below will serialize
+/// should be a `str`-type that represents the OSC address. The next field should
+/// contain all the arguments. For example, the `message` instance below will serialize
 /// to a message addressed to "/audio/play" with a payload of `4i32` and `0.5f32`.
 ///
 /// ```
@@ -26,11 +26,10 @@ use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 /// #[derive(Serialize)]
 /// struct AudioPlayer {
 ///     address: String,
-///     device_id: i32,
-///     volume: f32,
+///     args: (i32, f32),
 /// }
 ///# fn main() {
-/// let message = AudioPlayer{ address: "/audio/play".to_string(), device_id: 4, volume: 0.5 };
+/// let message = AudioPlayer{ address: "/audio/play".to_string(), args: (4, 0.5) };
 ///# }
 /// ```
 ///
@@ -88,6 +87,10 @@ struct MsgSerializer {
     args: Cursor<Vec<u8>>,
 }
 
+struct ArgSerializer<'a> {
+    msg: &'a mut MsgSerializer,
+}
+
 struct BundleSerializer {
     contents: Cursor<Vec<u8>>,
 }
@@ -140,6 +143,45 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
 impl<'a> Serializer for &'a mut MsgSerializer {
     type Ok = ();
     type Error = Error;
+    type SerializeSeq = ArgSerializer<'a>;
+    type SerializeTuple = Self::SerializeSeq;
+    type SerializeStruct = Self::SerializeSeq;
+    type SerializeTupleStruct = Impossible<Self::Ok, Error>;
+    type SerializeTupleVariant = Impossible<Self::Ok, Error>;
+    type SerializeMap = Impossible<Self::Ok, Error>;
+    type SerializeStructVariant = Impossible<Self::Ok, Error>;
+
+    fn serialize_seq(
+        self, 
+        _size: Option<usize>
+    ) -> ResultE<Self::SerializeSeq>
+    {
+        Ok(ArgSerializer{ msg: self })
+    }
+    fn serialize_tuple(
+        self, 
+        size: usize
+    ) -> ResultE<Self::SerializeTuple>
+    {
+        self.serialize_seq(Some(size))
+    }
+    fn serialize_struct(
+        self, 
+        _: &'static str, 
+        size: usize
+    ) -> ResultE<Self::SerializeStruct>
+    {
+        self.serialize_seq(Some(size))
+    }
+
+    default_ser!{bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char bytes
+        str none some unit unit_struct unit_variant newtype_struct newtype_variant
+        tuple_struct tuple_variant map struct_variant}
+}
+
+impl<'a> Serializer for &'a mut ArgSerializer<'a> {
+    type Ok = ();
+    type Error = Error;
     type SerializeSeq = Impossible<Self::Ok, Error>;
     type SerializeTuple = Self::SerializeSeq;
     type SerializeStruct = Self::SerializeSeq;
@@ -149,26 +191,25 @@ impl<'a> Serializer for &'a mut MsgSerializer {
     type SerializeStructVariant = Impossible<Self::Ok, Error>;
 
     fn serialize_i32(self, value: i32) -> ResultE<Self::Ok> {
-        self.addr_typetag.write_i32_tag()?;
-        Ok(self.args.osc_write_i32(value)?)
+        self.msg.addr_typetag.write_i32_tag()?;
+        Ok(self.msg.args.osc_write_i32(value)?)
     }
     fn serialize_f32(self, value: f32) -> ResultE<Self::Ok> {
-        self.addr_typetag.write_f32_tag()?;
-        Ok(self.args.osc_write_f32(value)?)
+        self.msg.addr_typetag.write_f32_tag()?;
+        Ok(self.msg.args.osc_write_f32(value)?)
     }
     fn serialize_str(self, value: &str) -> ResultE<Self::Ok> {
-        self.addr_typetag.write_str_tag()?;
-        Ok(self.args.osc_write_str(value)?)
+        self.msg.addr_typetag.write_str_tag()?;
+        Ok(self.msg.args.osc_write_str(value)?)
     }
     fn serialize_bytes(self, value: &[u8]) -> ResultE<Self::Ok> {
-        self.addr_typetag.write_blob_tag()?;
-        Ok(self.args.osc_write_blob(value)?)
+        self.msg.addr_typetag.write_blob_tag()?;
+        Ok(self.msg.args.osc_write_blob(value)?)
     }
     default_ser!{bool i8 i16 i64 u8 u16 u32 u64 f64 char
         none some unit unit_struct unit_variant newtype_struct newtype_variant
         seq tuple tuple_struct tuple_variant map struct struct_variant}
 }
-
 
 impl<'a, W: Write + 'a> SerializeSeq for PktContents<'a, W> {
     type Ok = ();
@@ -278,6 +319,51 @@ impl<'a, W: Write + 'a> SerializeStruct for PktContents<'a, W> {
 }
 
 impl<'a, W: Write + 'a> SerializeTuple for PktContents<'a, W> {
+    type Ok = ();
+    type Error = Error;
+
+    fn serialize_element<T: ?Sized>(&mut self, value: &T) -> ResultE<()>
+        where T: Serialize
+    {
+        SerializeSeq::serialize_element(self, value)
+    }
+
+    fn end(self) -> ResultE<()> {
+        SerializeSeq::end(self)
+    }
+}
+
+impl<'a> SerializeSeq for ArgSerializer<'a> {
+    type Ok = ();
+    type Error = Error;
+
+    fn serialize_element<'b, T: ?Sized>(&'b mut self, value: &T) -> ResultE<()>
+        where T: Serialize
+    {
+        // each element is an OSC arg: i32, f32, etc.
+        value.serialize(&mut ArgSerializer{ msg: self.msg })
+    }
+    fn end(self) -> ResultE<()> {
+        Ok(())
+    }
+}
+
+impl<'a> SerializeStruct for ArgSerializer<'a> {
+    type Ok = ();
+    type Error = Error;
+
+    fn serialize_field<T: ?Sized>(&mut self, _key: &'static str, value: &T) -> ResultE<()>
+        where T: Serialize
+    {
+        SerializeSeq::serialize_element(self, value)
+    }
+
+    fn end(self) -> ResultE<()> {
+        SerializeSeq::end(self)
+    }
+}
+
+impl<'a> SerializeTuple for ArgSerializer<'a> {
     type Ok = ();
     type Error = Error;
 

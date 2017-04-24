@@ -6,6 +6,14 @@ use error::{Error, ResultE};
 use super::osc_writer::OscWriter;
 use super::timetag_ser::TimetagSer;
 
+/// During serialization, we can determine whether the struct (packet)
+/// being serialized is a message v.s. a bundle based on the *type* of the first
+/// argument written:
+///   * String => the packet is a message, and the string is its address
+///   * (u32, u32) => the packet is a bundle, and the (u32, u32) is its timetag
+///
+/// This struct serializes the first item & yields the packet type so that
+/// its user can serialize the rest of the packet appropriately.
 pub struct PktTypeDecoder {
     output: Cursor<Vec<u8>>,
     pkt_type: PktType,
