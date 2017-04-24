@@ -9,7 +9,7 @@ use super::osc_reader::OscReader;
 use super::pkt_deserializer::PktDeserializer;
 use super::prim_deserializer::PrimDeserializer;
 
-/// Deserializes a single message, within a packet.
+/// Deserializes a single bundle, within a packet.
 pub struct BundleVisitor<'a, R: Read + 'a> {
     read: &'a mut Take<R>,
     state: State,

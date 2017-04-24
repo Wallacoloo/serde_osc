@@ -7,12 +7,12 @@ fn bundle() {
     #[derive(Debug, PartialEq, Deserialize)]
     struct Msg1 {
         address: String,
-        arg_0: i32,
+        args: (i32,),
     }
     #[derive(Debug, PartialEq, Deserialize)]
     struct Msg2 {
         address: String,
-        arg_0: f32,
+        args: (f32,),
     }
     #[derive(Debug, PartialEq, Deserialize)]
     struct Bundle {
@@ -24,11 +24,11 @@ fn bundle() {
         timestamp: (0x01020304, 0x05060708),
         msg1: Msg1 {
             address: "/m1".to_owned(),
-            arg_0: 0x5eeeeeed,
+            args: (0x5eeeeeed,),
         },
         msg2: Msg2 {
             address: "/m2".to_owned(),
-            arg_0: 440.0,
+            args: (440.0,),
         }
     };
 

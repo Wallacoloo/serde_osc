@@ -2,6 +2,7 @@ use std::io::{Cursor, Read};
 use serde;
 use error::ResultE;
 
+mod arg_visitor;
 mod bundle_visitor;
 mod iter_visitor;
 mod maybe_skip_comma;

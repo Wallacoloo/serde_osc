@@ -11,9 +11,7 @@ fn manual_de() {
     #[derive(Debug, PartialEq)]
     struct Deserialized {
         address: String,
-        arg_0: i32,
-        arg_1: f32,
-        arg_2: ByteBuf,
+        args: (i32, f32, ByteBuf),
     }
     struct MyVisitor;
     impl<'de> Visitor<'de> for MyVisitor {
@@ -25,21 +23,20 @@ fn manual_de() {
             where V: SeqAccess<'de>
         {
             let address = visitor.next_element()?.unwrap();
-            let arg_0 = visitor.next_element()?.unwrap();
-            let arg_1 = visitor.next_element()?.unwrap();
-            let arg_2 = visitor.next_element()?.unwrap();
+            let args = visitor.next_element()?.unwrap();
             // Assert end of packet.
             assert!(visitor.next_element::<()>()? == None);
-            Ok(Deserialized{ address, arg_0, arg_1, arg_2 })
+            Ok(Deserialized{ address, args })
         }
     }
     // Note: 0x43dc0000 is 440.0 in f32.
     let test_input = b"\x00\x00\x00\x2C/example/path\0\0\0,ifb\0\0\0\0\x01\x02\x03\x04\x43\xdc\0\0\0\0\0\x05\xde\xad\xbe\xef\xff\x00\x00\x00";
     let expected = Deserialized {
         address: "/example/path".to_owned(),
-        arg_0: 0x01020304,
-        arg_1: 440.0,
-        arg_2: ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef, 0xff]),
+        args: (0x01020304,
+            440.0,
+            ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef, 0xff]),
+        ),
     };
     let rd = Cursor::new(&test_input[..]);
     let visitor = MyVisitor;
