@@ -9,9 +9,11 @@ fn tuple_ser() {
     /// Tuple we'll serialize
     let test_input = (
         "/example/path".to_owned(),
-        0x01020304i32,
-        440.0f32,
-        ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef, 0xff]),
+        (
+            0x01020304i32,
+            440.0f32,
+            ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef, 0xff]),
+        )
     );
 
     // Note: 0x43dc0000 is 440.0 in f32.

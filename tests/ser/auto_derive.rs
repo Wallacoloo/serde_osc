@@ -10,15 +10,15 @@ fn auto_ser() {
     #[derive(Debug, PartialEq, Serialize)]
     struct Serialized {
         address: String,
-        arg_0: i32,
-        arg_1: f32,
-        arg_2: ByteBuf,
+        args: (i32, f32, ByteBuf),
     }
     let test_input = Serialized {
         address: "/example/path".to_owned(),
-        arg_0: 0x01020304,
-        arg_1: 440.0,
-        arg_2: ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef, 0xff]),
+        args: (
+            0x01020304,
+            440.0,
+            ByteBuf::from(vec![0xde, 0xad, 0xbe, 0xef, 0xff]),
+        ),
     };
 
     // Note: 0x43dc0000 is 440.0 in f32.
