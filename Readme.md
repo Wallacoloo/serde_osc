@@ -7,6 +7,8 @@ Note that blobs must be wrapped in [serde_bytes](https://crates.io/crates/serde_
 
 Note that Serde_osc does not provide any utilities for *routing* OSC messages (i.e. delivering parsed messages to their respective handler).
 
+Serde_osc should be considered **beta** software - its interface should not be considered stable.
+
 
 ## Usage
 
