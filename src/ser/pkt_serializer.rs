@@ -61,7 +61,6 @@ pub struct PktSerializer<W: Write> {
     output: W,
 }
 
-
 /// After the State receives a serialize_seq call,
 /// we return one of these. If the next data is a string, then it's the message
 /// address & we're serializing a message.
@@ -124,7 +123,6 @@ impl<'a, W: Write> Serializer for &'a mut PktSerializer<W> {
 }
 
 
-
 impl<'a, W: Write + 'a> SerializeSeq for PktContents<'a, W> {
     type Ok = ();
     type Error = Error;
@@ -173,11 +171,11 @@ impl<'a, W: Write + 'a> SerializeSeq for PktContents<'a, W> {
             State::UnknownType => Err(Error::BadFormat),
             // Write the message header & data to the output
             State::Msg(msg) => {
-                Ok(msg.write_into(&mut self.output.output)?)
+                msg.write_into(&mut self.output.output)
             },
             // Write the bundle header & data to the output
             State::Bundle(bundle) => {
-                Ok(bundle.write_into(&mut self.output.output)?)
+                bundle.write_into(&mut self.output.output)
             }
         }
     }
