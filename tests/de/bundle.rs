@@ -17,19 +17,20 @@ fn bundle() {
     #[derive(Debug, PartialEq, Deserialize)]
     struct Bundle {
         timestamp: (u32, u32),
-        msg1: Msg1,
-        msg2: Msg2,
+        messages: (Msg1, Msg2),
     }
     let expected = Bundle {
         timestamp: (0x01020304, 0x05060708),
-        msg1: Msg1 {
-            address: "/m1".to_owned(),
-            args: (0x5eeeeeed,),
-        },
-        msg2: Msg2 {
-            address: "/m2".to_owned(),
-            args: (440.0,),
-        }
+        messages: (
+            Msg1 {
+                address: "/m1".to_owned(),
+                args: (0x5eeeeeed,),
+            },
+            Msg2 {
+                address: "/m2".to_owned(),
+                args: (440.0,),
+            }
+        )
     };
 
     // Note: 0x43dc0000 is 440.0 in f32.
