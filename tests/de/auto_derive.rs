@@ -25,3 +25,19 @@ fn auto_de() {
     let deserialized: Deserialized = de::from_slice(test_input).unwrap();
     assert_eq!(deserialized, expected);
 }
+
+#[test]
+fn to_tuple() {
+    let expected = ("/ts".to_owned(), ());
+    let test_input = b"\x00\x00\x00\x08/ts\0,\0\0\0";
+    let deserialized: (String, ()) = de::from_slice(test_input).unwrap();
+    assert_eq!(deserialized, expected);
+}
+
+#[test]
+fn to_array() {
+    let expected: (String, [i32; 0]) = ("/ts".to_owned(), []);
+    let test_input = b"\x00\x00\x00\x08/ts\0,\0\0\0";
+    let deserialized: (String, [i32; 0]) = de::from_slice(test_input).unwrap();
+    assert_eq!(deserialized, expected);
+}
