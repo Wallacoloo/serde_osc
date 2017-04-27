@@ -81,9 +81,20 @@ impl<'a> Serializer for &'a mut MsgSerializer {
     {
         self.serialize_seq(Some(size))
     }
+    // We can consider a unit, (), as a length-0 sequence
+    fn serialize_unit(self) -> Result<Self::Ok, Self::Error> {
+        Ok(())
+    }
+    fn serialize_unit_struct(
+        self,
+        name: &'static str
+    ) -> Result<Self::Ok, Self::Error>
+    {
+        Ok(())
+    }
 
     default_ser!{bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char bytes
-        str none some unit unit_struct unit_variant newtype_struct newtype_variant
+        str none some unit_variant newtype_struct newtype_variant
         tuple_struct tuple_variant map struct_variant}
 }
 

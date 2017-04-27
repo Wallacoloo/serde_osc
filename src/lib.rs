@@ -7,7 +7,9 @@
 //! It mixes human-readable API endpoints (termed "addresses") with binary-encoded
 //! arguments and headers. An example OSC message is
 //!
-//!     b"\0\0\0\x24/audio/play\0,ifb\0\0\0\0\0\0\0\x01x71\x44\x68\x00\0\0\0\x04\xDE\xAD\xBE\xEF"
+//! ```norun
+//! b"\0\0\0\x24/audio/play\0,ifb\0\0\0\0\0\0\0\x01x71\x44\x68\x00\0\0\0\x04\xDE\xAD\xBE\xEF"
+//! ```
 //!
 //! In this example, the first 4 bytes signify the length of the message;
 //! the null-terminated string "/audio/play" signifies the endpoint (which

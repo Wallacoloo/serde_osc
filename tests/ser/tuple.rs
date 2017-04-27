@@ -26,3 +26,20 @@ fn tuple_ser() {
     }
     assert_eq!(output.into_inner(), expected);
 }
+
+#[test]
+fn unit_ser() {
+    /// Tuple we'll serialize
+    let test_input = (
+        "/ts".to_owned(), ()
+    );
+
+    let expected = b"\x00\x00\x00\x08/ts\0,\0\0\0".to_vec();
+    let mut output = Cursor::new(Vec::new());
+
+    {
+        let mut test_de = Serializer::new(output.by_ref());
+        let _result = test_input.serialize(&mut test_de).unwrap();
+    }
+    assert_eq!(output.into_inner(), expected);
+}

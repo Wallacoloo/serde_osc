@@ -41,6 +41,12 @@ use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 ///# #[macro_use]
 ///# extern crate serde_derive;
 ///#
+///# #[derive(Serialize)]
+///# struct AudioPlayer {
+///#     address: String,
+///#     args: (i32, f32),
+///# }
+///#
 /// #[derive(Serialize)]
 /// struct MyBundle {
 ///     time: (u32, u32),
@@ -51,6 +57,7 @@ use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 ///     // Additionally, this object would still be serialized as a bundle even
 ///     // if it contained only one message.
 /// }
+///# fn main() {}
 /// ```
 ///
 /// Note: the time-tag can also be `[u32; 2]`, a struct containing two `u32` members,
