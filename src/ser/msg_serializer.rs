@@ -87,7 +87,7 @@ impl<'a> Serializer for &'a mut MsgSerializer {
     }
     fn serialize_unit_struct(
         self,
-        name: &'static str
+        _name: &'static str
     ) -> Result<Self::Ok, Self::Error>
     {
         Ok(())

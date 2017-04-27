@@ -41,3 +41,15 @@ fn to_array() {
     let deserialized: (String, [i32; 0]) = de::from_slice(test_input).unwrap();
     assert_eq!(deserialized, expected);
 }
+
+#[test]
+fn to_unit_struct() {
+    #[derive(Debug, PartialEq, Deserialize)]
+    struct Unit;
+
+    let expected: (String, Unit) = ("/ts".to_owned(), Unit);
+    let test_input = b"\x00\x00\x00\x08/ts\0,\0\0\0";
+    let deserialized: (String, Unit) = de::from_slice(test_input).unwrap();
+    assert_eq!(deserialized, expected);
+}
+

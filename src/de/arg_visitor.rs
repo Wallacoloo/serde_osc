@@ -41,12 +41,38 @@ impl<'de, 'a, R> de::Deserializer<'de> for &'a mut ArgDeserializer<'a, R>
             None => Err(Error::BadFormat),
         }
     }
+    // default serde impls don't equate units to empty sequences.
+    fn deserialize_unit<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+        where V: Visitor<'de>
+    {
+        match self.data.take() {
+            Some(mut data) => {
+                match data.parse_next()? {
+                    // We have no arguments; decoding a unit is ok!
+                    None => visitor.visit_unit(),
+                    // Cannot deserialize a unit from a non-empty sequence!
+                    Some(_) => Err(Error::BadFormat),
+                }
+            },
+            // The arguments can only be deserialized once.
+            None => Err(Error::BadFormat),
+        }
+    }
+    fn deserialize_unit_struct<V>(
+        self, 
+        _name: &'static str, 
+        visitor: V
+    ) -> Result<V::Value, Self::Error>
+        where V: Visitor<'de>
+    {
+        self.deserialize_unit(visitor)
+    }
 
     // This struct only deserializes sequences; ignore all type hints.
     // More info: https://github.com/serde-rs/serde/blob/b7d6c5d9f7b3085a4d40a446eeb95976d2337e07/serde/src/macros.rs#L106
     forward_to_deserialize_any! {
-        bool u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 char str string unit option
-        seq bytes byte_buf map unit_struct newtype_struct
+        bool u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 char str string option
+        seq bytes byte_buf map newtype_struct
         tuple_struct struct identifier tuple enum ignored_any
     }
 }
