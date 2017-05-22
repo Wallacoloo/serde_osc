@@ -10,12 +10,14 @@ use super::pkt_deserializer::PktDeserializer;
 use super::prim_deserializer::PrimDeserializer;
 
 /// Deserializes a single bundle, within a packet.
+#[derive(Debug)]
 pub struct BundleVisitor<'a, R: Read + 'a> {
     read: &'a mut Take<R>,
     state: State,
 }
 
 /// Which part of the bundle is being parsed
+#[derive(Debug)]
 enum State {
     /// Parsing the 64-bit OSC time tag
     TimeTag,

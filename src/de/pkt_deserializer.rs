@@ -22,6 +22,7 @@ use super::bundle_visitor::BundleVisitor;
 /// deserialization targets.
 ///
 /// [`serde_osc::ser::Serializer`]: ../ser/struct.Serializer.html
+#[derive(Debug)]
 pub struct PktDeserializer<'a, R: Read + 'a> {
     reader: &'a mut R,
 }

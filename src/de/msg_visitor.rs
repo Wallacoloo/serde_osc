@@ -7,12 +7,14 @@ use super::arg_visitor::ArgDeserializer;
 use super::osc_type::OscType;
 
 /// Deserializes a single message, within a packet.
+#[derive(Debug)]
 pub struct MsgVisitor<'a, R: Read + 'a> {
     read: &'a mut Take<R>,
     state: State,
 }
 
 /// Which part of the OSC message is being parsed
+#[derive(Debug)]
 enum State {
     /// Deserializing the address pattern.
     Address(String),

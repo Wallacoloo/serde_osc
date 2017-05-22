@@ -7,6 +7,7 @@ use error::{Error, ResultE};
 use super::osc_writer::OscWriter;
 
 /// Once we know we're serializing a message, we do so through this struct.
+#[derive(Debug)]
 pub struct MsgSerializer {
     /// Address + typetag, merged into one field
     addr_typetag: Cursor<Vec<u8>>,
@@ -14,6 +15,7 @@ pub struct MsgSerializer {
     args: Cursor<Vec<u8>>,
 }
 
+#[derive(Debug)]
 pub struct ArgSerializer<'a> {
     msg: &'a mut MsgSerializer,
 }

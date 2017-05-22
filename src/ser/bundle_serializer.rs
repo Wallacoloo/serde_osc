@@ -6,9 +6,11 @@ use error::{Error, ResultE};
 use super::osc_writer::OscWriter;
 use super::pkt_serializer::PktSerializer;
 
+#[derive(Debug)]
 pub struct BundleSerializer {
     contents: Cursor<Vec<u8>>,
 }
+#[derive(Debug)]
 pub struct BundleElemSerializer<'a> {
     bundle: &'a mut BundleSerializer,
 }

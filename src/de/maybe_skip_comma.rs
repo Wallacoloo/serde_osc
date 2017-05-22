@@ -2,6 +2,7 @@ use std::mem;
 
 /// Typetags in an OSC packet USUALLY start with a comma, but not always.
 /// This Iterator adapts them to NEVER start with a comma.
+#[derive(Debug)]
 pub struct MaybeSkipComma<I> {
     iter: I,
     not_first: bool,

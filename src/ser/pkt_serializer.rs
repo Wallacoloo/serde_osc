@@ -64,6 +64,7 @@ use super::pkt_type_decoder::{PktType, PktTypeDecoder};
 /// or *anything* that serializes as a flat sequence of two `u32`s.
 ///
 /// [time-tag]: http://opensoundcontrol.org/node/3/#timetags
+#[derive(Debug)]
 pub struct PktSerializer<W: Write> {
     output: W,
 }
@@ -73,11 +74,13 @@ pub struct PktSerializer<W: Write> {
 /// address & we're serializing a message.
 /// If the next data is a sequence, we're serializing a bundle, and that sequence is
 /// the (u32, u32) time tag.
+#[derive(Debug)]
 pub struct PktContents<'a, W: Write + 'a> {
     output: &'a mut PktSerializer<W>,
     state: State,
 }
 
+#[derive(Debug)]
 enum State {
     UnknownType,
     Msg(MsgSerializer),

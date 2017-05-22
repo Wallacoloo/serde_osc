@@ -3,6 +3,7 @@ use error::{Error, ResultE};
 
 /// Struct to deserialize a single element from the OSC message sequence.
 /// (e.g. just the address, or the first argument, etc).
+#[derive(Debug)]
 pub enum OscType {
     I32(i32),
     F32(f32),

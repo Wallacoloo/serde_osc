@@ -8,11 +8,13 @@ use super::osc_reader::OscReader;
 use super::osc_type::OscType;
 use super::maybe_skip_comma::MaybeSkipComma;
 
+#[derive(Debug)]
 pub struct ArgDeserializer<'a, R: Read + 'a> {
     data: Option<ArgVisitor<'a, R>>,
 }
 
 /// Deserializes the argument data of an OSC message.
+#[derive(Debug)]
 pub struct ArgVisitor<'a, R: Read + 'a> {
     read: &'a mut Take<R>,
     /// calling .next() on this returns the OSC char code of the next argument,

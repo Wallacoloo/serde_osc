@@ -3,6 +3,7 @@ use serde::ser::{Impossible, Serialize, Serializer};
 
 use error::{Error, ResultE};
 
+#[derive(Debug)]
 pub struct TimetagSer {
     n_parsed: u8,
     parsed: [u32; 2],

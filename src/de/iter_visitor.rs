@@ -12,6 +12,7 @@ use error::{Error, ResultE};
 /// # Examples
 /// visitor.visit_seq(IterVisitor([1u32, 2u32].into_iter()))
 /// 
+#[derive(Debug)]
 pub struct IterVisitor<I>(pub I);
 
 

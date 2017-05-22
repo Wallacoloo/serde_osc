@@ -6,6 +6,7 @@ use error::{Error, ResultE};
 /// Implements the Deserializer trait for primitive types.
 /// Currently only implemented for the types needed by osc_serde,
 /// but could easily be extended via a macro.
+#[derive(Debug)]
 pub struct PrimDeserializer<T>(pub T);
 
 impl<'de> Deserializer<'de> for PrimDeserializer<u32> {

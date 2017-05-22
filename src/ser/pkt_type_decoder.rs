@@ -14,12 +14,13 @@ use super::timetag_ser::TimetagSer;
 ///
 /// This struct serializes the first item & yields the packet type so that
 /// its user can serialize the rest of the packet appropriately.
+#[derive(Debug)]
 pub struct PktTypeDecoder {
     output: Cursor<Vec<u8>>,
     pkt_type: PktType,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum PktType {
     Unknown,
     Msg,
