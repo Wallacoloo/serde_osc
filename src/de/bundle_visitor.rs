@@ -80,7 +80,7 @@ impl<'de, 'a, R> de::Deserializer<'de> for BundleField<'a, R>
     {
         match self {
             BundleField::TimeTag((sec, frac)) =>
-                visitor.visit_seq(IterVisitor([sec, frac].into_iter().cloned()
+                visitor.visit_seq(IterVisitor([sec, frac].iter().cloned()
                     .map(PrimDeserializer))),
             BundleField::Elements(mut read) =>
                 visitor.visit_seq(ElemAccessor{ read }),
