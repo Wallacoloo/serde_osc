@@ -35,8 +35,6 @@ pub fn from_read<'de, D, R>(mut rd: R, framing: Framing) -> ResultE<D>
             buffer.write(tempbuffer.as_slice())?;
             buffer.seek(SeekFrom::Start(0))?;
 
-            println!("{:?}", buffer);
-
             let mut de = Deserializer::new(&mut buffer);
             D::deserialize(&mut de)
         }
