@@ -17,7 +17,7 @@ fn tuple_ser() {
     );
 
     // Note: 0x43dc0000 is 440.0 in f32.
-    let expected = b"\x00\x00\x00\x2C/example/path\0\0\0,ifb\0\0\0\0\x01\x02\x03\x04\x43\xdc\0\0\0\0\0\x05\xde\xad\xbe\xef\xff\x00\x00\x00".to_vec();
+    let expected = b"/example/path\0\0\0,ifb\0\0\0\0\x01\x02\x03\x04\x43\xdc\0\0\0\0\0\x05\xde\xad\xbe\xef\xff\x00\x00\x00".to_vec();
     let mut output = Cursor::new(Vec::new());
 
     {
@@ -34,7 +34,7 @@ fn unit_ser() {
         "/ts".to_owned(), ()
     );
 
-    let expected = b"\x00\x00\x00\x08/ts\0,\0\0\0".to_vec();
+    let expected = b"/ts\0,\0\0\0".to_vec();
     let mut output = Cursor::new(Vec::new());
 
     {

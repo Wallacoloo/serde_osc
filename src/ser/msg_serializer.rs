@@ -39,8 +39,6 @@ impl MsgSerializer {
             return Err(Error::BadFormat);
         }
 
-        // Write the packet length
-        output.osc_write_i32(payload_size.try_into()?)?;
         // Write the address and type tag
         output.write_all(&typetag)?;
         let zeros = b"\0\0\0\0";
@@ -62,22 +60,22 @@ impl<'a> Serializer for &'a mut MsgSerializer {
     type SerializeStructVariant = Impossible<Self::Ok, Error>;
 
     fn serialize_seq(
-        self, 
+        self,
         _size: Option<usize>
     ) -> ResultE<Self::SerializeSeq>
     {
         Ok(ArgSerializer{ msg: self })
     }
     fn serialize_tuple(
-        self, 
+        self,
         size: usize
     ) -> ResultE<Self::SerializeTuple>
     {
         self.serialize_seq(Some(size))
     }
     fn serialize_struct(
-        self, 
-        _: &'static str, 
+        self,
+        _: &'static str,
         size: usize
     ) -> ResultE<Self::SerializeStruct>
     {

@@ -5,7 +5,7 @@ extern crate serde_bytes;
 extern crate serde_osc;
 
 use serde_bytes::ByteBuf;
-use serde_osc::{de, ser};
+use serde_osc::{de, ser, Framing};
 
 /// Struct we'll serialize.
 /// This represents a single OSC message with three arguments:
@@ -31,11 +31,10 @@ fn main() {
     println!("Serializing {:?}", message);
 
     // Serialize the message to an OSC packet stored in a Vec<u8>
-    let as_vec = ser::to_vec(&message).unwrap();
+    let as_vec = ser::to_vec(&message, Framing::Unframed).unwrap();
     println!("Serialied to: {:?}", as_vec);
 
     // Deserialize an OSC packet contained in a Vec<u8> into the Message struct
-    let received: Message = de::from_slice(&as_vec).unwrap();
+    let received: Message = de::from_slice(&as_vec, Framing::Unframed).unwrap();
     println!("Received: {:?}", received);
 }
-
