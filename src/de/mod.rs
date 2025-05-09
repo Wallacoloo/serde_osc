@@ -33,6 +33,9 @@ pub fn from_read<'de, D, R>(mut rd: R, framing: Framing) -> ResultE<D>
             let buflen = rd.read_to_end(&mut tempbuffer)?;
             buffer.write_i32::<BigEndian>(buflen.try_into()?)?;
             buffer.write(tempbuffer.as_slice())?;
+            buffer.seek(SeekFrom::Start(0))?;
+
+            println!("{:?}", buffer);
 
             let mut de = Deserializer::new(&mut buffer);
             D::deserialize(&mut de)
