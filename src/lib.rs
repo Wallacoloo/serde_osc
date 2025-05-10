@@ -34,7 +34,7 @@
 //! [`serde_osc::from_read`]: de/fn.from_read.html
 //! [`serde_osc::to_vec`]: ser/fn.to_vec.html
 //! [`serde_osc::from_vec`]: de/fn.from_vec.html
-//! [http://opensoundcontrol.org/spec-1_0]: http://opensoundcontrol.org/spec-1_0
+//! [https://opensoundcontrol.stanford.edu/spec-1_0.html]: https://opensoundcontrol.stanford.edu/spec-1_0.html
 //!
 //! # Examples
 //!
