@@ -1,4 +1,4 @@
-use serde_osc::de;
+use serde_osc::{de, Framing};
 
 #[test]
 fn bundle() {
@@ -34,6 +34,6 @@ fn bundle() {
     // Note: 0x43dc0000 is 440.0 in f32.
     let test_input = b"\x00\x00\x00\x30#bundle\0\x01\x02\x03\x04\x05\x06\x07\x08\x00\x00\x00\x0C/m1\0,i\0\0\x5E\xEE\xEE\xED\x00\x00\x00\x0C/m2\0,f\0\0\x43\xdc\x00\x00";
 
-    let deserialized: Bundle = de::from_slice(test_input).unwrap();
+    let deserialized: Bundle = de::from_slice(test_input, Framing::Framed).unwrap();
     assert_eq!(deserialized, expected);
 }

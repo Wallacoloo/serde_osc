@@ -100,3 +100,8 @@ pub mod ser;
 
 pub use de::{from_read, from_slice};
 pub use ser::{to_write, to_vec};
+
+pub enum Framing {
+    Unframed,
+    Framed
+}

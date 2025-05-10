@@ -1,5 +1,5 @@
 use serde_bytes::ByteBuf;
-use serde_osc::de;
+use serde_osc::{de, Framing};
 
 
 #[test]
@@ -22,7 +22,7 @@ fn auto_de() {
     // Note: 0x43dc0000 is 440.0 in f32.
     let test_input = b"\x00\x00\x00\x2C/example/path\0\0\0,ifb\0\0\0\0\x01\x02\x03\x04\x43\xdc\0\0\0\0\0\x05\xde\xad\xbe\xef\xff\x00\x00\x00";
 
-    let deserialized: Deserialized = de::from_slice(test_input).unwrap();
+    let deserialized: Deserialized = de::from_slice(test_input, Framing::Framed).unwrap();
     assert_eq!(deserialized, expected);
 }
 
@@ -30,7 +30,7 @@ fn auto_de() {
 fn to_tuple() {
     let expected = ("/ts".to_owned(), ());
     let test_input = b"\x00\x00\x00\x08/ts\0,\0\0\0";
-    let deserialized: (String, ()) = de::from_slice(test_input).unwrap();
+    let deserialized: (String, ()) = de::from_slice(test_input, Framing::Framed).unwrap();
     assert_eq!(deserialized, expected);
 }
 
@@ -38,7 +38,7 @@ fn to_tuple() {
 fn to_array() {
     let expected: (String, [i32; 0]) = ("/ts".to_owned(), []);
     let test_input = b"\x00\x00\x00\x08/ts\0,\0\0\0";
-    let deserialized: (String, [i32; 0]) = de::from_slice(test_input).unwrap();
+    let deserialized: (String, [i32; 0]) = de::from_slice(test_input, Framing::Framed).unwrap();
     assert_eq!(deserialized, expected);
 }
 
@@ -49,7 +49,6 @@ fn to_unit_struct() {
 
     let expected: (String, Unit) = ("/ts".to_owned(), Unit);
     let test_input = b"\x00\x00\x00\x08/ts\0,\0\0\0";
-    let deserialized: (String, Unit) = de::from_slice(test_input).unwrap();
+    let deserialized: (String, Unit) = de::from_slice(test_input, Framing::Framed).unwrap();
     assert_eq!(deserialized, expected);
 }
-
